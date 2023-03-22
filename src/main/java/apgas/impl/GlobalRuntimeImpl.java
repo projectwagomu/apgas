@@ -1082,4 +1082,12 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
   public void decrementPlaceIds(List<Place> PlacesToBeRemoved) {
     this.hostManager.decrementPlaceIds(PlacesToBeRemoved);
   }
+
+  /**
+   * Used to define the handler for malleable programs
+   * @param handler the handler to use from now on.
+   */
+  public void setMalleableHandler(MalleableHandler handler) {
+	  // TODO
+  }
 }
