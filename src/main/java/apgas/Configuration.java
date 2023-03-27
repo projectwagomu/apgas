@@ -14,6 +14,8 @@ package apgas;
 import java.util.ArrayList;
 import java.util.List;
 
+import apgas.impl.elastic.MalleableCommunicator;
+
 /**
  * The {@link Configuration} class defines the names of the system properties used to configure the
  * global runtime.
@@ -188,6 +190,34 @@ public final class Configuration<T> {
   public static final Configuration<Integer> APGAS_HOSTMANAGER_STRATEGY =
       new Configuration<>(APGAS_HOSTMANAGER_STRATEGY_PROPERTY, 0, Integer.class);
 
+  /**
+   * This String is used to define the property setting which indicated if the running APGAS program
+   * is elastic. 
+   * Possible values are:
+   * <ul>
+   * <li>fixed: (default), no change in the number of places during execution
+   * <li>evolving: (Not implemented yet), the running program may initiate requests for additional places / release some during execution
+   * <li>malleable: the running program may dynamically change the number of running places following orders given by the scheduler
+   * </ul>
+   */
+  private static final String APGAS_ELASTIC_PROPERTY = "apgas.elastic";
+  
+  /**
+   * Property defining if the program is allowed to change the number of running processes during execution.
+   */
+  public static final Configuration<String> APGAS_ELASTIC = new Configuration<>(APGAS_ELASTIC_PROPERTY, "fixed", String.class);
+  
+  /**
+   * String used to define the class used as malleable communicator
+   */
+  private static final String APGAS_MALLEABLE_COMMUNICATOR_PROPERTY = "apgas.malleable_communicator";
+  /**
+   * Property defining the class used to communicate with the scheduler when a
+   * malleable program is running
+   */
+  public static final Configuration<String> APGAS_MALLEABLE_COMMUNICATOR =
+	  new Configuration<>(APGAS_MALLEABLE_COMMUNICATOR_PROPERTY, MalleableCommunicator.class.getCanonicalName(), String.class);
+  
   private final String name;
   private final Class<T> propertyType;
   private T defaultValue;
