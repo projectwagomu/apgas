@@ -19,6 +19,8 @@ import apgas.Place;
 import apgas.SerializableCallable;
 import apgas.SerializableJob;
 import apgas.impl.Finish.Factory;
+import apgas.impl.elastic.MalleableCommunicator;
+import apgas.impl.elastic.MalleableHandler;
 import apgas.launcher.Launcher;
 import apgas.launcher.SshLauncher;
 import apgas.util.GlobalID;
@@ -74,6 +76,10 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
   final ThreadPoolExecutor immediatePool;
   /** This place's ID. */
   final int here;
+  /** The unit in charge of communicating with the scheduler to receive incoming malleable requests */
+  public transient MalleableCommunicator malleableCommunicator;
+  /** The handler set by the user in charge of informing the running program of incoming changes */
+  public transient MalleableHandler malleableHandler;
   /** The pool for this global runtime instance. */
   final MyForkJoinPool pool;
   /** The resilient map from finish IDs to finish states. */
@@ -1087,7 +1093,15 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
    * Used to define the handler for malleable programs
    * @param handler the handler to use from now on.
    */
-  public void setMalleableHandler(MalleableHandler handler) {
-	  // TODO
+  public synchronized void setMalleableHandler(MalleableHandler handler) {
+	  if (here != 0) {
+		  throw new RuntimeException("Attempted to set the malleable handler on place(" + here + 
+				  "). The malleable handler should only be set on place(0)");
+	  }
+	  if (malleableHandler == null) {
+		  malleableHandler = handler;
+	  } else {
+		  throw new RuntimeException("The Malleable Handler is already set, ignoring");
+	  }
   }
 }

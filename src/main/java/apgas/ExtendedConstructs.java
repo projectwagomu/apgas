@@ -1,6 +1,6 @@
 package apgas;
 
-import apgas.impl.MalleableHandler;
+import apgas.impl.elastic.MalleableHandler;
 
 public class ExtendedConstructs {
 

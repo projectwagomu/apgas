@@ -1,4 +1,4 @@
-package apgas.impl;
+package apgas.impl.elastic;
 
 import java.io.Serializable;
 import java.util.List;
