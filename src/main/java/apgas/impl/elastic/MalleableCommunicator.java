@@ -1,9 +1,11 @@
 package apgas.impl.elastic;
 
+import static apgas.Constructs.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import apgas.Constructs;
-import apgas.GlobalRuntime;
 import apgas.Place;
 import apgas.impl.GlobalRuntimeImpl;
 
@@ -37,13 +39,21 @@ public abstract class MalleableCommunicator {
 	@SuppressWarnings("unchecked")
 	final protected void malleableShrink(int nbPlacesToFree) {
 		// Perform the user-defined pre-shrink tasks
-		GlobalRuntimeImpl.getRuntime().malleableHandler.preShrink(nbPlacesToFree);
-		
+		final List<Place> toRelease = GlobalRuntimeImpl.getRuntime().malleableHandler.preShrink(nbPlacesToFree);
+
+		// Obtain the hostnames of the places to release and shutdown these places
+		ArrayList<String> hosts = new ArrayList<>();
+		for (Place p : toRelease) {
+			String hostname = at(p,()->{
+				return System.getenv("HOSTNAME");
+			});
+			hosts.add(hostname);
+		}
 		// Shrink
 		// TODO
 		
 		// Inform the scheduler of the released hosts
-		// TODO
+		hostReleased(hosts);
 		
 		// Inform the running program of the end of the operation
 		List<Place> places = (List<Place>) Constructs.places();
@@ -66,4 +76,10 @@ public abstract class MalleableCommunicator {
 		// TODO
 		//GlobalRuntimeImpl.getRuntime().malleableHandler.postGrow(nbPlaces, currentPlaces, newPlaces);
 	}
+	
+	/**
+	 * Informs the scheduler that the hosts given as argument were released
+	 * @param placesReleased places released following a shrink order
+	 */
+	abstract protected void hostReleased(List<String> hosts);
 }
