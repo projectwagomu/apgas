@@ -38,7 +38,7 @@ public interface MalleableHandler extends Serializable {
 	 * @param nbPlaces number of places that have to be released
 	 * @return the places that will be released
 	 */
-	public List<Place> preShrink(int nbPlaces);
+	public List<? extends Place> preShrink(int nbPlaces);
 	
 	/**
 	 * Method called prior to an increase in the number of processes in the
