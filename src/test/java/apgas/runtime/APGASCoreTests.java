@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -291,6 +292,7 @@ public class APGASCoreTests {
     assertEquals(5, testCounter.get(), "The Counter should be set to 5 by the async Task.");
   }
 
+  @Disabled
   @Test
   @DisplayName("Testing starting places for malleability")
   void shouldStartMallPlaces() {

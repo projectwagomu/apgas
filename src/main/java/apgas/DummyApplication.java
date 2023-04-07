@@ -70,5 +70,7 @@ public class DummyApplication {
 				// Do nothing in case of exception
 			} 
 		}
+		
+		System.out.println(toElapse + "s have elapsed, quiting");
 	}
 }
