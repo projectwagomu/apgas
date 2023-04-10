@@ -1128,7 +1128,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		if (malleableHandler == null) {
 			malleableHandler = handler;
 		} else {
-			throw new RuntimeException("The Malleable Handler is already set, ignoring");
+			throw new RuntimeException("The malleable handler is already set, ignoring");
 		}
 
 		// Starting the communicator

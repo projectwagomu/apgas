@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import apgas.impl.elastic.MalleableCommunicator;
+import apgas.impl.elastic.SocketMalleableCommunicator;
 
 /**
  * The {@link Configuration} class defines the names of the system properties used to configure the
@@ -230,7 +231,7 @@ public final class Configuration<T> {
    * malleable program is running
    */
   public static final Configuration<String> APGAS_MALLEABLE_COMMUNICATOR =
-	  new Configuration<>(APGAS_MALLEABLE_COMMUNICATOR_PROPERTY, MalleableCommunicator.class.getCanonicalName(), String.class);
+	  new Configuration<>(APGAS_MALLEABLE_COMMUNICATOR_PROPERTY, SocketMalleableCommunicator.class.getCanonicalName(), String.class);
   
   private final String name;
   private final Class<T> propertyType;

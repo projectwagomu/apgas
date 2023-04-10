@@ -18,7 +18,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
     private Socket socket = null;
     
     
-    SocketMalleableCommunicator() {
+    public SocketMalleableCommunicator() {
         // Obtain the IP/Port of the scheduler to establish a connection
         Properties props = System.getProperties();
         if (!props.containsKey(SCHEDULER_IP) || !props.containsKey(SCHEDULER_Port)) {
