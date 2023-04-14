@@ -442,24 +442,37 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
 	@Override
 	public void shutdown() {
-		if (shutdownHandler != null) {
-			shutdownHandler.run();
-		}
-
 		synchronized (this) {
 			if (dying) {
 				return;
 			}
 			dying = true;
 		}
+		// Shutdown was decided. Before anything else, we stop receiving expand/shrink
+		// orders from the scheduler (if running in malleable mode)
+		if (malleableCommunicator != null) {
+			malleableCommunicator.stop();
+		}
+		
+		// Run the shutdown handler if it was defined
+		if (shutdownHandler != null) {
+			shutdownHandler.run();
+		}
+		
+		// Run the launcher-defined shutdown handler
 		if (launcher != null) {
 			launcher.shutdown();
 		}
+		
+		// Turn off the worker pool to stop running asynchronous tasks
 		pool.shutdown();
 		//    pool.awaitTermination(1, TimeUnit.SECONDS);
 		immediatePool.shutdown();
+		// Turn off the communication layer with the other processes
 		transport.shutdown();
-		System.exit(42);
+		
+		// Exit
+		System.exit(0);
 	}
 
 	/**

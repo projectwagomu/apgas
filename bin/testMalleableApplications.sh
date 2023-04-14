@@ -1,9 +1,11 @@
 #!/bin/bash
 
 # Test script used to launch a test application and check that the application reacts correctly to the malleable instructions
-mvn clean package
+# mvn clean package
 
-java -cp "target/*" \
+cd "$(dirname "$0")"
+
+java -cp "../target/*" \
      -Dapgas.verbose.launcher=true \
      -Dapgas.places=4 \
      -Dapgas.elastic=malleable \

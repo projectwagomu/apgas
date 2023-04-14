@@ -17,6 +17,8 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
     private ServerSocket server = null;
     private Socket socket = null;
     
+    private String schedulerIP;
+    private int schedulerPort;
     
     public SocketMalleableCommunicator() {
         // Obtain the IP/Port of the scheduler to establish a connection
@@ -24,23 +26,29 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
         if (!props.containsKey(SCHEDULER_IP) || !props.containsKey(SCHEDULER_Port)) {
             throw new RuntimeException("Cannot create the SocketMalleableCommunicator, either the IP or the port of the scheduler was not set");
         }
-        String schedulerIP = System.getProperty(SCHEDULER_IP);
-        int schedulerPort = Integer.parseInt(System.getProperty(SCHEDULER_Port));
+        schedulerIP = System.getProperty(SCHEDULER_IP);
+        schedulerPort = Integer.parseInt(System.getProperty(SCHEDULER_Port));
         
 //        server = new ServerSocket();
 //        server.bind(new InetSocketAddress(schedulerIP, schedulerPort));
     }
-    
+
+    /**
+     * For class {@link SocketMalleableCommunicator}, starting means forking a thread to listen to incoming requests from the scheduler. 
+     */
     @Override
     public void start() {
         // TODO Auto-generated method stub
-
+    	System.err.println("SocketMalleableCommunicator start() method called, opening socket to listen to " + schedulerIP + ":" + schedulerPort);
     }
 
+    /**
+     * For class {@link SocketMalleableCommunicator}, stopping consists in interrupting the thread listening for requests from the scheduler and cleaning up the objects used for communications.
+     */
     @Override
     public void stop() {
         // TODO Auto-generated method stub
-
+    	System.err.println("SockerMalleableCommunicator stop() method called, closing socket and cleaning up.");
     }
 
     @Override
