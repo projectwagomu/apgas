@@ -23,7 +23,7 @@ public abstract class MalleableCommunicator {
 	 * capable of changing its number of running hosts and as a result may
 	 * receive orders from the scheduler.
 	 */
-	public abstract void start();
+	public abstract void start() throws Exception;
 	
 	/**
 	 * Method called when the running program is about to terminate. This method

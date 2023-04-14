@@ -1,10 +1,12 @@
-package apgas;
+package apgas.testing;
 
 import static apgas.Constructs.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import apgas.ExtendedConstructs;
+import apgas.Place;
 import apgas.impl.elastic.MalleableHandler;
 
 public class DummyApplication {

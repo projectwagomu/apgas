@@ -453,24 +453,24 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		if (malleableCommunicator != null) {
 			malleableCommunicator.stop();
 		}
-		
+
 		// Run the shutdown handler if it was defined
 		if (shutdownHandler != null) {
 			shutdownHandler.run();
 		}
-		
+
 		// Run the launcher-defined shutdown handler
 		if (launcher != null) {
 			launcher.shutdown();
 		}
-		
+
 		// Turn off the worker pool to stop running asynchronous tasks
 		pool.shutdown();
 		//    pool.awaitTermination(1, TimeUnit.SECONDS);
 		immediatePool.shutdown();
 		// Turn off the communication layer with the other processes
 		transport.shutdown();
-		
+
 		// Exit
 		System.exit(0);
 	}
@@ -1145,6 +1145,28 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 
 		// Starting the communicator
-		malleableCommunicator.start();
+		try {
+			malleableCommunicator.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+			disableMalleableCommunicator();
+		}
+	}
+
+	/**
+	 * Sub-routine called in case the malleable communicator fails for some reason.
+	 */
+	private void disableMalleableCommunicator() {
+		// Diable the malleable communicator
+		System.err.println("The Malleable Communicator sufferred an issue and will be stopped");
+		try {
+			malleableCommunicator.stop();
+		} catch (Exception e) {
+			System.err.println("An error occurred while trying to shut down the malleable communicator");
+			e.printStackTrace();
+		} finally {
+			malleableCommunicator = null;
+			malleableHandler = null;
+		}
 	}
 }

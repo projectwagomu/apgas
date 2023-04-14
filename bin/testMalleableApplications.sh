@@ -11,4 +11,4 @@ java -cp "../target/*" \
      -Dapgas.elastic=malleable \
      -Dmalleable_scheduler_ip=127.0.0.1 \
      -Dmalleable_scheduler_port=8081 \
-     apgas.DummyApplication 10
+     apgas.testing.DummyApplication 10
