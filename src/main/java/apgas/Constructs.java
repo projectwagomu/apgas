@@ -212,10 +212,6 @@ public final class Constructs {
     GlobalRuntime.getRuntimeImpl().startMallPlaces(n);
   }
 
-  public static List<Integer> startMallPlacesBlocking(int n, boolean verbose) {
-    return GlobalRuntime.getRuntimeImpl().startMallPlacesBlocking(n);
-  }
-
   public static void shutdownMallPlaces(final List<Place> toBeRemoved, boolean verbose) {
     GlobalRuntime.getRuntimeImpl().shutdownMallPlaces(toBeRemoved);
   }

@@ -973,7 +973,10 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		return removedHosts;
 	}
 
-	public List<Integer> startMallPlacesBlocking(int n) {
+	public List<Integer> startMallPlacesBlocking(int n, List<String> hosts) {
+		for (String host : hosts) {
+			hostManager.addHost(host);
+		}
 		synchronized (MALLEABILITY_SYNC) {
 			final int initialPlacesCount = this.places.size();
 			final int expectedPlacesCount = initialPlacesCount + n;
@@ -1033,7 +1036,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			final int initialPlacesCount = this.places.size();
 			final int expectedPlacesCount = initialPlacesCount - toRelease.size();
 			freedHosts = shutdownMallPlaces(toRelease);
-			
+
 			// wait on place 0
 			waitForNewPlacesCount(expectedPlacesCount);
 

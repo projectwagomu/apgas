@@ -60,9 +60,11 @@ public abstract class MalleableCommunicator {
 	 */
 	final protected void malleableGrow(int nbPlacesToGrow, List<String> hosts) {
 		// Perform the user-defined pre-grow tasks
-		GlobalRuntimeImpl.getRuntime().malleableHandler.preGrow(nbPlacesToGrow);
+		GlobalRuntimeImpl impl = GlobalRuntimeImpl.getRuntime();
+		impl.malleableHandler.preGrow(nbPlacesToGrow);
 		
 		// Grow
+		impl.startMallPlacesBlocking(nbPlacesToGrow, hosts);
 		
 		// Inform the running program of the end of this grow operation
 		// TODO
