@@ -22,76 +22,78 @@ import java.io.ObjectInputStream;
  */
 final class ImmediateTask implements SerializableRunnable {
 
-  private static final SerializableRunnable NULL = () -> {};
-  /** The function to run. */
-  private SerializableRunnable f;
+	private static final long serialVersionUID = -7419887249105833691L;
+	
+	private static final SerializableRunnable NULL = () -> {};
+	/** The function to run. */
+	private SerializableRunnable f;
 
-  /**
-   * Constructs a new {@link ImmediateTask}.
-   *
-   * @param f the function to run
-   */
-  ImmediateTask(SerializableRunnable f) {
-    this.f = f;
-  }
+	/**
+	 * Constructs a new {@link ImmediateTask}.
+	 *
+	 * @param f the function to run
+	 */
+	ImmediateTask(SerializableRunnable f) {
+		this.f = f;
+	}
 
-  /** Submits the task for asynchronous execution. */
-  @Override
-  public void run() {
-    GlobalRuntimeImpl.getRuntime().executeImmediate(this.f);
-  }
+	/** Submits the task for asynchronous execution. */
+	@Override
+	public void run() {
+		GlobalRuntimeImpl.getRuntime().executeImmediate(this.f);
+	}
 
-  /**
-   * Submits the task for asynchronous uncounted execution at place p.
-   *
-   * <p>If serialization fails, the task is dropped. The exception is logged to System.err and
-   * masked unless APGAS_SERIALIZATION_EXCEPTION is set to "true".
-   *
-   * @param p the place ID
-   */
-  void immediateAsyncAt(int p) {
-    try {
-      GlobalRuntimeImpl.getRuntime().transport.send(p, this);
-    } catch (final Throwable e) {
-      throw e;
-    }
-  }
+	/**
+	 * Submits the task for asynchronous uncounted execution at place p.
+	 *
+	 * <p>If serialization fails, the task is dropped. The exception is logged to System.err and
+	 * masked unless APGAS_SERIALIZATION_EXCEPTION is set to "true".
+	 *
+	 * @param p the place ID
+	 */
+	void immediateAsyncAt(int p) {
+		try {
+			GlobalRuntimeImpl.getRuntime().transport.send(p, this);
+		} catch (final Throwable e) {
+			throw e;
+		}
+	}
 
-  /**
-   * Submits the task for asynchronous uncounted execution at place p.
-   *
-   * <p>If serialization fails, the task is dropped. The exception is logged to System.err and
-   * masked unless APGAS_SERIALIZATION_EXCEPTION is set to "true".
-   *
-   * @param member the hazelcast member
-   */
-  void immediateAsyncAt(Member member) {
-    try {
-      GlobalRuntimeImpl.getRuntime().transport.send(member, this);
-    } catch (final Throwable e) {
-      throw e;
-    }
-  }
+	/**
+	 * Submits the task for asynchronous uncounted execution at place p.
+	 *
+	 * <p>If serialization fails, the task is dropped. The exception is logged to System.err and
+	 * masked unless APGAS_SERIALIZATION_EXCEPTION is set to "true".
+	 *
+	 * @param member the hazelcast member
+	 */
+	void immediateAsyncAt(Member member) {
+		try {
+			GlobalRuntimeImpl.getRuntime().transport.send(member, this);
+		} catch (final Throwable e) {
+			throw e;
+		}
+	}
 
-  /**
-   * Deserializes the task.
-   *
-   * <p>If deserialization fails, the task is dropped. The exception is logged to System.err.
-   *
-   * @param in the object input stream
-   * @throws IOException if I/O errors occur
-   * @throws ClassNotFoundException if the class of the serialized object cannot be found
-   */
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    try {
-      f = (SerializableRunnable) in.readObject();
-    } catch (final Throwable e) {
-      System.err.println(
-          "[APGAS] Ignoring failure to receive an uncounted task at place "
-              + GlobalRuntimeImpl.getRuntime().here
-              + " due to: "
-              + e);
-      f = NULL;
-    }
-  }
+	/**
+	 * Deserializes the task.
+	 *
+	 * <p>If deserialization fails, the task is dropped. The exception is logged to System.err.
+	 *
+	 * @param in the object input stream
+	 * @throws IOException if I/O errors occur
+	 * @throws ClassNotFoundException if the class of the serialized object cannot be found
+	 */
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+		try {
+			f = (SerializableRunnable) in.readObject();
+		} catch (final Throwable e) {
+			System.err.println(
+					"[APGAS] Ignoring failure to receive an uncounted task at place "
+							+ GlobalRuntimeImpl.getRuntime().here
+							+ " due to: "
+							+ e);
+			f = NULL;
+		}
+	}
 }

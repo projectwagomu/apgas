@@ -1,9 +1,7 @@
 package apgas.impl.elastic;
 
-import static apgas.Constructs.*;
-
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 import apgas.Constructs;
 import apgas.Place;
@@ -62,13 +60,22 @@ public abstract class MalleableCommunicator {
 		// Perform the user-defined pre-grow tasks
 		GlobalRuntimeImpl impl = GlobalRuntimeImpl.getRuntime();
 		impl.malleableHandler.preGrow(nbPlacesToGrow);
+		List<? extends Place> oldPlaces = Constructs.places();
 		
 		// Grow
 		impl.startMallPlacesBlocking(nbPlacesToGrow, hosts);
 		
+		// Check what the new places are
+		List<? extends Place> nowPlaces = Constructs.places();
+		ArrayList<Place> newPlaces = new ArrayList<>();
+		for (Place p : nowPlaces) {
+			if (!oldPlaces.contains(p)) {
+				newPlaces.add(p);
+			}
+		}
+		
 		// Inform the running program of the end of this grow operation
-		// TODO
-		//GlobalRuntimeImpl.getRuntime().malleableHandler.postGrow(nbPlaces, currentPlaces, newPlaces);
+		GlobalRuntimeImpl.getRuntime().malleableHandler.postGrow(nowPlaces.size(), nowPlaces, newPlaces);
 	}
 	
 	/**

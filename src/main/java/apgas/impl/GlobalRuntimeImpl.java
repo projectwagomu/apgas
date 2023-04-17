@@ -930,13 +930,13 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			}
 		}
 	}
-
+	
 	/**
-	 * 
+	 * Sub routine used to launch the shutdown of the places given as parameter. 
 	 * @param toBeRemoved list of places to release
 	 * @return the name of the hosts of freed processes in a list
 	 */
-	public List<String> shutdownMallPlaces(final List<Place> toBeRemoved) {
+	private List<String> shutdownMallPlaces(final List<Place> toBeRemoved) {
 		if (!this.isMaster) {
 			System.err.println("[APGAS] " + home + " called shutdownMallPlaces(), but only the master is allowed to do this");
 			return null;
@@ -1019,28 +1019,29 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 					e.printStackTrace();
 				}
 			}
-
 			return Collections.emptyList();
 		}
 	}
 
 	/**
-	 * 
-	 * @param toRelease
-	 * @return
+	 * Procedure used to release the places given as parameter.
+	 * This procedure is called by the {@link MalleableCommunicator} after calling the
+	 * pre-hook provided by the programmer
+	 * @param toBeRemoved list of places to release
+	 * @return the name of the hosts of freed processes in a list
 	 */
 	public List<String> shutdownMallPlacesBlocking(List<Place> toRelease) {
-		int shutdown;
 		List<String> freedHosts = null;
 		synchronized (MALLEABILITY_SYNC) {
 			final int initialPlacesCount = this.places.size();
 			final int expectedPlacesCount = initialPlacesCount - toRelease.size();
 			freedHosts = shutdownMallPlaces(toRelease);
 
-			// wait on place 0
+			// Wait on place 0 for the number of places to reach the expected level
+			// TODO handle failures with a sort of timeout?
 			waitForNewPlacesCount(expectedPlacesCount);
 
-			// wait on all other places
+			// Make sure all the other places are also informed of the change in the number of processes
 			GlobalRef<CountDownLatch> globalRef =
 					new GlobalRef<>(new CountDownLatch(expectedPlacesCount - 1));
 			for (final Place p : places()) {

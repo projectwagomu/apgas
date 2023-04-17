@@ -59,7 +59,7 @@ public interface MalleableHandler extends Serializable {
 	 * @param nbPlaces number of places currently running
 	 * @param currentPlaces list containing all the places currently running
 	 */
-	public void postShrink(int nbPlaces, List<Place> currentPlaces);
+	public void postShrink(int nbPlaces, List<? extends Place> currentPlaces);
 	
 	/**
 	 * Method called after the necessary number of places were added to the
@@ -70,5 +70,5 @@ public interface MalleableHandler extends Serializable {
 	 * @param newPlaces list containing the places that were added to the
 	 * runtime
 	 */
-	public void postGrow(int nbPlaces, List<Place> currentPlaces, List<Place> newPlaces);
+	public void postGrow(int nbPlaces, List<? extends Place> currentPlaces, List<? extends Place> newPlaces);
 }

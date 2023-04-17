@@ -24,11 +24,11 @@ MAINPRGM= java -cp "../target/*" \
      -Dapgas.hostfile=$HOSTFILE \
      -Dmalleable_scheduler_ip=127.0.0.1 \
      -Dmalleable_scheduler_port=8081 \
-     apgas.testing.DummyApplication 20 &
+     apgas.testing.DummyApplication 30 &
 
 sleep 10
 java -cp "../target/*" apgas.testing.MalleableOrder expand 2 $HOSTNAME $HOSTNAME
-sleep 4
+sleep 10
 java -cp "../target/*" apgas.testing.MalleableOrder shrink 1
 
 wait $MAINPRGM

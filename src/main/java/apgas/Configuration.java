@@ -14,7 +14,6 @@ package apgas;
 import java.util.ArrayList;
 import java.util.List;
 
-import apgas.impl.elastic.MalleableCommunicator;
 import apgas.impl.elastic.SocketMalleableCommunicator;
 
 /**

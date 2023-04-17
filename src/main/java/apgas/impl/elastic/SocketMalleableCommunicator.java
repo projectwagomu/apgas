@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import apgas.Constructs;
-
 public class SocketMalleableCommunicator extends MalleableCommunicator {
 
 	public static final String SCHEDULER_IP = "malleable_scheduler_ip";

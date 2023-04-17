@@ -25,8 +25,6 @@ public class HostManager {
   final ArrayList<String> launchCommand = new ArrayList<>();
   /** The List of Hosts */
   private final List<Host> hosts;
-  /** The local Host */
-  private final Host localHost;
 
   private final boolean verboseLauncher = Configuration.APGAS_VERBOSE_LAUNCHER.get();
   /**
@@ -55,15 +53,12 @@ public class HostManager {
       // for (Host h : this.hosts) h.maxPlacesPerHost = Integer.MAX_VALUE;
 
       this.hosts.get(0).attachPlace(new Place(0));
-      this.localHost = this.hosts.get(0);
     } else if (localhost != null) {
       Host host =
           new Host(localhost, numFirstPlaces); // もともとはnumFirtsPlacesではなくInteger.MAX_VALUEになってた
       host.attachPlace(new Place(0));
       this.hosts.add(host);
-      this.localHost = host;
     } else {
-      this.localHost = null;
       System.err.println("[APGAS] HostManager: Error! No valid hostnames and no localhost!");
     }
     this.placeIDGenerator = new AtomicInteger(0);

@@ -31,16 +31,16 @@ public class DummyApplication {
 
 		@Override
 		public void preGrow(int nbPlaces) {
-			System.out.println("Handler received request to increases places by " + nbPlaces);
+			System.out.println("Handler received notification that places will increase by " + nbPlaces);
 		}
 
 		@Override
-		public void postShrink(int nbPlaces, List<Place> currentPlaces) {
+		public void postShrink(int nbPlaces, List<? extends Place> currentPlaces) {
 			System.out.println("Handler received notification that the shrink operation is now complete");
 		}
 
 		@Override
-		public void postGrow(int nbPlaces, List<Place> currentPlaces, List<Place> newPlaces) {
+		public void postGrow(int nbPlaces, List<? extends Place> currentPlaces, List<? extends Place> newPlaces) {
 			System.out.println("Handler received notification that the grow operation is now complete");			
 		}
 		
