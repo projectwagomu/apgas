@@ -42,15 +42,7 @@ public abstract class MalleableCommunicator {
 		final List<Place> toRelease = GlobalRuntimeImpl.getRuntime().malleableHandler.preShrink(nbPlacesToFree);
 
 		// Obtain the hostnames of the places to release and shutdown these places
-		ArrayList<String> hosts = new ArrayList<>();
-		for (Place p : toRelease) {
-			String hostname = at(p,()->{
-				return System.getenv("HOSTNAME");
-			});
-			hosts.add(hostname);
-		}
-		// Shrink
-		GlobalRuntimeImpl.getRuntime().shutdownMallPlacesBlocking(toRelease);
+		List<String> hosts = GlobalRuntimeImpl.getRuntime().shutdownMallPlacesBlocking(toRelease);
 		
 		// Inform the scheduler of the released hosts
 		hostReleased(hosts);

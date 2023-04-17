@@ -228,10 +228,6 @@ public final class Constructs {
     return GlobalRuntime.getRuntimeImpl().receiveSchedulerMessage();
   }
 
-  public static void sendRemovedHosts() {
-    GlobalRuntime.getRuntimeImpl().sendRemovedHosts();
-  }
-
   public static boolean closeSocket() throws IOException {
     return GlobalRuntime.getRuntimeImpl().closeSocket();
   }

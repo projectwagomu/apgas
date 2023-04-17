@@ -70,7 +70,7 @@ public class MalleableOrder {
 				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				for (int i = 0; i < Integer.parseInt(args[1]); i++) {
 					String line = reader.readLine();
-					System.out.println(line);
+					System.out.println("[MalleableOrder] The hosts freed were: " + line);
 				}
 			}
 		} catch (Exception e) {

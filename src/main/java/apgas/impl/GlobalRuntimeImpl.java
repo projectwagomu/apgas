@@ -122,8 +122,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
 	public SchedulerCommunicator communicator;
 
-	public ArrayList<String> removedHosts;
-
 	boolean isSocetInit = false;
 
 	/**
@@ -933,15 +931,20 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 	}
 
-	public int shutdownMallPlaces(final List<Place> toBeRemoved) {
+	/**
+	 * 
+	 * @param toBeRemoved list of places to release
+	 * @return the name of the hosts of freed processes in a list
+	 */
+	public List<String> shutdownMallPlaces(final List<Place> toBeRemoved) {
 		if (!this.isMaster) {
 			System.err.println("[APGAS] " + home + " called shutdownMallPlaces(), but only the master is allowed to do this");
-			return 0;
+			return null;
 		}
 		if (verboseLauncher) {
 			System.err.println("[APGAS] shuting down " + toBeRemoved);
 		}
-		removedHosts = new ArrayList<String>();
+		ArrayList<String> removedHosts = new ArrayList<String>();
 
 		synchronized (MALLEABILITY_SYNC) {
 			for (final Place placeToBeRemoved : toBeRemoved) {
@@ -967,7 +970,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				.immediateAsyncAt(memberToRemove);
 			}
 		}
-		return toBeRemoved.size();
+		return removedHosts;
 	}
 
 	public List<Integer> startMallPlacesBlocking(int n) {
@@ -1018,12 +1021,19 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 	}
 
-	public int shutdownMallPlacesBlocking(List<Place> toRelease) {
+	/**
+	 * 
+	 * @param toRelease
+	 * @return
+	 */
+	public List<String> shutdownMallPlacesBlocking(List<Place> toRelease) {
 		int shutdown;
+		List<String> freedHosts = null;
 		synchronized (MALLEABILITY_SYNC) {
 			final int initialPlacesCount = this.places.size();
-			shutdown = shutdownMallPlaces(toRelease);
-			final int expectedPlacesCount = initialPlacesCount - shutdown;
+			final int expectedPlacesCount = initialPlacesCount - toRelease.size();
+			freedHosts = shutdownMallPlaces(toRelease);
+			
 			// wait on place 0
 			waitForNewPlacesCount(expectedPlacesCount);
 
@@ -1058,7 +1068,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			}
 		}
 		this.hostManager.decrementPlaceIds(toRelease);
-		return shutdown;
+		return freedHosts;
 	}
 
 	private void waitForNewPlacesCount(int expectedPlacesCount) {
@@ -1112,10 +1122,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		this.message = communicator.receiveSchedulerMessage();
 		hostManager.addHostFromMessage(message);
 		return message;
-	}
-
-	public void sendRemovedHosts() {
-		this.communicator.sendRemovedHosts(removedHosts);
 	}
 
 	public boolean closeSocket() throws IOException {
