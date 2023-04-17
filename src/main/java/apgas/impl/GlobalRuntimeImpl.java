@@ -148,12 +148,16 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		Configuration.initAll();
 		this.initialPlaces = Configuration.APGAS_PLACES.get();
 		this.verboseLauncher = Configuration.APGAS_VERBOSE_LAUNCHER.get();
-		this.resilient = Configuration.APGAS_RESILIENT.get();
+		final String elasticityMode = Configuration.APGAS_ELASTIC.get();
+		if (elasticityMode.equals("malleable")) {
+			resilient = true;
+		} else {
+			this.resilient = Configuration.APGAS_RESILIENT.get();
+		}
 		final int maxThreads = Configuration.APGAS_MAX_THREADS.get();
 		final String launcherName = Configuration.APGAS_LAUNCHER.get();
 		final int backupCount = Configuration.APGAS_BACKUPCOUNT.get();
 		final int placeID = Configuration.APGAS_PLACE_ID.get();
-		final String elasticityMode = Configuration.APGAS_ELASTIC.get();
 
 		if (true == verboseLauncher) {
 			System.err.println("JVM of Place " + placeID + " started");
@@ -466,12 +470,12 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
 		// Turn off the worker pool to stop running asynchronous tasks
 		pool.shutdown();
-		//    pool.awaitTermination(1, TimeUnit.SECONDS);
 		immediatePool.shutdown();
 		// Turn off the communication layer with the other processes
 		transport.shutdown();
 
 		// Exit
+		System.err.println("place(" + here + ") is shutting down.");
 		System.exit(0);
 	}
 
@@ -896,7 +900,15 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 	}
 
-	public Future<List<Integer>> startMallPlaces(int n, boolean verbose) {
+	/*
+	 * TODO delete this method?
+	 * 
+	 * This is now unused as with the generic malleable implementation, only the
+	 * blocking version is now used.
+	 * 
+	 * In the meantime this method was turned private.
+	 */
+	public Future<List<Integer>> startMallPlaces(int n) {
 		if (!this.isMaster) {
 			System.err.println(
 					"[APGAS] "
@@ -912,7 +924,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				return executor.submit(
 						() -> {
 							// return this.launcher.launch(hostManager, n, verbose, message);
-							return this.launcher.launch(this.hostManager, n, verbose);
+							return this.launcher.launch(this.hostManager, n, verboseLauncher);
 						});
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -921,19 +933,14 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 	}
 
-	public int shutdownMallPlaces(final List<Place> toBeRemoved, boolean verbose) {
+	public int shutdownMallPlaces(final List<Place> toBeRemoved) {
 		if (!this.isMaster) {
-			System.err.println(
-					"[APGAS] "
-							+ home
-							+ " called shutdownMallPlaces(), but only the master is allowed to do this");
+			System.err.println("[APGAS] " + home + " called shutdownMallPlaces(), but only the master is allowed to do this");
 			return 0;
 		}
-
-		if (true == verbose) {
-			System.err.println("[APGAS] shutdown now " + toBeRemoved);
+		if (verboseLauncher) {
+			System.err.println("[APGAS] shuting down " + toBeRemoved);
 		}
-
 		removedHosts = new ArrayList<String>();
 
 		synchronized (MALLEABILITY_SYNC) {
@@ -948,29 +955,28 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				final Member memberToRemove = this.transport.getMembers().get(placeIdToRemove);
 
 				removedHosts.add(this.hostManager.detachFromHost(placeToBeRemoved));
-				if (true == verbose) {
+				if (verboseLauncher) {
 					System.err.println(this.hostManager);
 				}
 
 				// the other remaining places are automatically refreshed by Transport:memberRemoved
-				new ImmediateTask(
-						() -> {
-							// should be wait for finishing all tasks
-							GlobalRuntimeImpl.getRuntime().shutdown();
-						})
+				new ImmediateTask(() -> {
+					// should be wait for finishing all tasks on the host shutting down
+					GlobalRuntimeImpl.getRuntime().shutdown();
+				})
 				.immediateAsyncAt(memberToRemove);
 			}
 		}
 		return toBeRemoved.size();
 	}
 
-	public List<Integer> startMallPlacesBlocking(int n, boolean verbose) {
+	public List<Integer> startMallPlacesBlocking(int n) {
 		synchronized (MALLEABILITY_SYNC) {
 			final int initialPlacesCount = this.places.size();
 			final int expectedPlacesCount = initialPlacesCount + n;
-			Future<List<Integer>> listFuture = startMallPlaces(n, verbose);
+			Future<List<Integer>> listFuture = startMallPlaces(n);
 			// wait on place 0
-			waitForNewPlacesCount(expectedPlacesCount, verbose);
+			waitForNewPlacesCount(expectedPlacesCount);
 
 			// wait on all other places
 			GlobalRef<CountDownLatch> globalRef =
@@ -982,7 +988,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				immediateAsyncAt(
 						p,
 						() -> {
-							GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount, verbose);
+							GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
 							GlobalRuntimeImpl.getRuntime()
 							.immediateAsyncAt(
 									globalRef.home(),
@@ -1012,14 +1018,14 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 	}
 
-	public int shutdownMallPlacesBlocking(List<Place> toBeRemoved, boolean verbose) {
+	public int shutdownMallPlacesBlocking(List<Place> toRelease) {
 		int shutdown;
 		synchronized (MALLEABILITY_SYNC) {
 			final int initialPlacesCount = this.places.size();
-			shutdown = shutdownMallPlaces(toBeRemoved, verbose);
+			shutdown = shutdownMallPlaces(toRelease);
 			final int expectedPlacesCount = initialPlacesCount - shutdown;
 			// wait on place 0
-			waitForNewPlacesCount(expectedPlacesCount, verbose);
+			waitForNewPlacesCount(expectedPlacesCount);
 
 			// wait on all other places
 			GlobalRef<CountDownLatch> globalRef =
@@ -1028,14 +1034,15 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				if (p.id == here().id) {
 					continue;
 				}
-				if (toBeRemoved.contains(p)) {
+				if (toRelease.contains(p)) {
 					continue;
 				}
 
 				immediateAsyncAt(
 						p,
 						() -> {
-							GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount, verbose);
+							System.err.println(p + " was informed of the reduction in the number of hosts");
+							GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
 							GlobalRuntimeImpl.getRuntime()
 							.immediateAsyncAt(
 									globalRef.home(),
@@ -1050,16 +1057,16 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				e.printStackTrace();
 			}
 		}
-		this.hostManager.decrementPlaceIds(toBeRemoved);
+		this.hostManager.decrementPlaceIds(toRelease);
 		return shutdown;
 	}
 
-	private void waitForNewPlacesCount(int expectedPlacesCount, boolean verbose) {
+	private void waitForNewPlacesCount(int expectedPlacesCount) {
 		while ((places().size() != expectedPlacesCount)
 				|| (this.transport.hazelcast.getCluster().getMembers().size() != expectedPlacesCount)
 				|| (!this.transport.hazelcast.getPartitionService().isClusterSafe())
 				|| (this.transport.getMembers().values().size() != expectedPlacesCount)) {
-			if (verbose) {
+			if (verboseLauncher) {
 				System.out.println(
 						"[APGAS] Place("
 								+ here
@@ -1074,7 +1081,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				e.printStackTrace();
 			}
 		}
-		;
 	}
 
 	private static boolean isReachable(

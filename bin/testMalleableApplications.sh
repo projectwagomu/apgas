@@ -17,10 +17,10 @@ MAINPRGM= java -cp "../target/*" \
 
 sleep 10
 
-java -cp "../target/*" apgas.testing.MalleableOrder expand 1 $HSTNAME
+#java -cp "../target/*" apgas.testing.MalleableOrder expand 2 $HSTNAME $HSTNAME
 
-sleep 4
+#sleep 4
 
-java -cp "../target/*" apgas.testing.MalleableOrder shrink 2 $HSTNAME
+java -cp "../target/*" apgas.testing.MalleableOrder shrink 1
 
 wait $MAINPRGM

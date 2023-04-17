@@ -16,13 +16,14 @@ public class DummyApplication {
 		private static final long serialVersionUID = 4003743679074722952L;
 
 		@Override
-		public List<? extends Place> preShrink(int nbPlaces) {
-			System.out.println("Handler received request to reduce places by" + nbPlaces);
+		public List<Place> preShrink(int nbPlaces) {
+			System.out.println("Handler received request to reduce places by " + nbPlaces);
 			List<? extends Place> nowPlaces = places();
 			List<Place> toRelease = new ArrayList<Place>(nbPlaces);			
 			for (Place p : nowPlaces) {
 				if (p.id == 0) continue;
 				toRelease.add(p);
+				System.out.println("Handler releases " + p);
 				if (toRelease.size() == nbPlaces) break;
 			}
 			return toRelease;
@@ -30,7 +31,7 @@ public class DummyApplication {
 
 		@Override
 		public void preGrow(int nbPlaces) {
-			System.out.println("Handler received request to increases places by" + nbPlaces);
+			System.out.println("Handler received request to increases places by " + nbPlaces);
 		}
 
 		@Override

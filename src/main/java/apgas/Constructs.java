@@ -209,19 +209,19 @@ public final class Constructs {
   }
 
   public static void startMallPlaces(int n, boolean verbose) {
-    GlobalRuntime.getRuntimeImpl().startMallPlaces(n, verbose);
+    GlobalRuntime.getRuntimeImpl().startMallPlaces(n);
   }
 
   public static List<Integer> startMallPlacesBlocking(int n, boolean verbose) {
-    return GlobalRuntime.getRuntimeImpl().startMallPlacesBlocking(n, verbose);
+    return GlobalRuntime.getRuntimeImpl().startMallPlacesBlocking(n);
   }
 
   public static void shutdownMallPlaces(final List<Place> toBeRemoved, boolean verbose) {
-    GlobalRuntime.getRuntimeImpl().shutdownMallPlaces(toBeRemoved, verbose);
+    GlobalRuntime.getRuntimeImpl().shutdownMallPlaces(toBeRemoved);
   }
 
   public static void shutdownMallPlacesBlocking(final List<Place> toBeRemoved, boolean verbose) {
-    GlobalRuntime.getRuntimeImpl().shutdownMallPlacesBlocking(toBeRemoved, verbose);
+    GlobalRuntime.getRuntimeImpl().shutdownMallPlacesBlocking(toBeRemoved);
   }
 
   public static SchedulerMessages receiveSchedulerMessage() {

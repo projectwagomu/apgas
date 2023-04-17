@@ -53,7 +53,7 @@ public class MalleableOrder {
 
 		Socket socket = null;
 		PrintWriter writer = null;
-		
+
 		try {
 			socket = new Socket(jobIp, jobPort);
 			writer = new PrintWriter(socket.getOutputStream(), true);
@@ -65,14 +65,14 @@ public class MalleableOrder {
 			writer.println(str);
 
 			// If shrink order, then read the hosts that were freed
-			//			if (args[0].equals("shrink")) {
-			//				BufferedReader reader;
-			//				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			//				for (int i = 0; i < Integer.parseInt(args[1]); i++) {
-			//					String line = reader.readLine();
-			//					System.out.println(line);
-			//				}
-			//			}
+			if (args[0].equals("shrink")) {
+				BufferedReader reader;
+				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				for (int i = 0; i < Integer.parseInt(args[1]); i++) {
+					String line = reader.readLine();
+					System.out.println(line);
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

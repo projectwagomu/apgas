@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -55,8 +56,23 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 				String line = reader.readLine();
 				System.out.println("SocketMalleableCommunicator received: " + line);
 
-				// TODO interpret result and call the appropriate procedure
-				//				String str[] = line.split(" ");
+				// Interpret received order and call the appropriate procedure
+				String str[] = line.split(" ");
+				String order = str[0];
+				int change = Integer.parseInt(str[1]);
+				if (order.equals("shrink")) {
+					int toReduce = change;
+					super.malleableShrink(toReduce);
+				} else if (order.equals("expand")){
+					List<String> hostnames = new ArrayList<>();
+					int toIncrease = change;
+					for (int i=0; i<toIncrease; i++) {
+						hostnames.add(str[i+2]);
+					}
+					super.malleableGrow(toIncrease, hostnames);
+				} else {
+					System.err.println("Received unexpected order " + str[0]+", expected <shrink> or <expand>. Ignoring ...");
+				}
 			} catch (IOException e) {
 				System.err.println("IO error while reading content from the socket");
 				e.printStackTrace();
@@ -91,13 +107,17 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 
 	@Override
 	protected void hostReleased(List<String> hosts) {
+		for (String s : hosts) {
+			System.err.println("Released host: " + s);
+		}
 		try {
 			this.writer = new PrintWriter(socket.getOutputStream(), true);
 			for (String hostName : hosts) {
 				writer.println(hostName);
 			}
 		} catch (Exception e) {
-			// e.printStackTrace();
+			System.err.println("Encountered issue while indicating the released hosts to the scheduler");
+			e.printStackTrace();
 		}
 	}
 

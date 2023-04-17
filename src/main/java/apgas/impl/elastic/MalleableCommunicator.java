@@ -39,7 +39,7 @@ public abstract class MalleableCommunicator {
 	@SuppressWarnings("unchecked")
 	final protected void malleableShrink(int nbPlacesToFree) {
 		// Perform the user-defined pre-shrink tasks
-		final List<? extends Place> toRelease = GlobalRuntimeImpl.getRuntime().malleableHandler.preShrink(nbPlacesToFree);
+		final List<Place> toRelease = GlobalRuntimeImpl.getRuntime().malleableHandler.preShrink(nbPlacesToFree);
 
 		// Obtain the hostnames of the places to release and shutdown these places
 		ArrayList<String> hosts = new ArrayList<>();
@@ -50,7 +50,7 @@ public abstract class MalleableCommunicator {
 			hosts.add(hostname);
 		}
 		// Shrink
-		// TODO
+		GlobalRuntimeImpl.getRuntime().shutdownMallPlacesBlocking(toRelease);
 		
 		// Inform the scheduler of the released hosts
 		hostReleased(hosts);
