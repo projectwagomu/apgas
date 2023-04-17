@@ -19,6 +19,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 
 	private PrintWriter writer = null;
 	private BufferedReader reader = null;
+	/** Socket used to receive orders from the scheduler */
 	private ServerSocket server = null;
 	private Socket socket = null;
 
@@ -49,7 +50,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 	private void listenToSocket() {
 		while (listening) {
 			try {
-				server.accept();
+				socket = server.accept();
 				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				String line = reader.readLine();
 				System.out.println("SocketMalleableCommunicator received: " + line);
@@ -59,7 +60,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 			} catch (IOException e) {
 				System.err.println("IO error while reading content from the socket");
 				e.printStackTrace();
-			}
+			} 
 		}
 	}
 
