@@ -12,7 +12,6 @@
 package apgas.launcher;
 
 import apgas.impl.HostManager;
-import apgas.util.SchedulerMessages;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,20 +20,6 @@ public class NoLauncher implements Launcher {
 
   @Override
   public List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception {
-    if (verbose) {
-      System.err.println(
-          "[APGAS] Ignoring attempt to spawn "
-              + n
-              + " new place(s), command: "
-              + String.join(" ", hostManager.getCopyOfLaunchCommand()));
-    }
-    return Collections.emptyList();
-  }
-
-  // Launcherで定義してしまっているから、エラーを消すために追加
-  @Override
-  public List<Integer> launch(
-      HostManager hostManager, int n, boolean verbose, SchedulerMessages message) throws Exception {
     if (verbose) {
       System.err.println(
           "[APGAS] Ignoring attempt to spawn "

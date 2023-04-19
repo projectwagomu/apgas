@@ -26,7 +26,6 @@ import apgas.launcher.SshLauncher;
 import apgas.util.GlobalID;
 import apgas.util.GlobalRef;
 import apgas.util.MyForkJoinPool;
-import apgas.util.SchedulerMessages;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
 import java.io.IOException;
@@ -117,10 +116,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	private Consumer<Place> handler;
 	/** True if shutdown is in progress. */
 	private boolean dying;
-
-	public SchedulerMessages message;
-
-	public SchedulerCommunicator communicator;
 
 	boolean isSocetInit = false;
 
@@ -1116,21 +1111,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		} catch (IOException ex) {
 			return false;
 		}
-	}
-
-	public SchedulerMessages receiveSchedulerMessage() {
-		if (!isSocetInit) {
-			this.communicator = new SchedulerCommunicator("localhost", 8080);
-			this.isSocetInit = true;
-		}
-		this.message = communicator.receiveSchedulerMessage();
-		hostManager.addHostFromMessage(message);
-		return message;
-	}
-
-	public boolean closeSocket() throws IOException {
-		this.isSocetInit = false;
-		return this.communicator.closSocket();
 	}
 
 	public void decrementPlaceIds(List<Place> PlacesToBeRemoved) {

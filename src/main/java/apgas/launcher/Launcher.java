@@ -12,7 +12,6 @@
 package apgas.launcher;
 
 import apgas.impl.HostManager;
-import apgas.util.SchedulerMessages;
 import java.util.List;
 
 /** The {@link Launcher} interface. */
@@ -29,10 +28,6 @@ public interface Launcher {
    * @return
    */
   List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception;
-
-  // スケジューラと通信するために追加
-  public List<Integer> launch(
-      HostManager hostManager, int n, boolean verbose, SchedulerMessages message) throws Exception;
 
   /** Shuts down the {@link Launcher} instance. */
   void shutdown();
