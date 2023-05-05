@@ -35,13 +35,29 @@ public class DummyApplication {
 		}
 
 		@Override
-		public void postShrink(int nbPlaces, List<? extends Place> currentPlaces) {
+		public void postShrink(int nbPlaces, List<? extends Place> removedPlaces) {
 			System.out.println("Handler received notification that the shrink operation is now complete");
+			System.out.print("Removed places: [");
+			for (Place p : removedPlaces) {
+				System.out.print(p + " ");
+			}
+			System.out.println("]");
 		}
 
 		@Override
-		public void postGrow(int nbPlaces, List<? extends Place> currentPlaces, List<? extends Place> newPlaces) {
-			System.out.println("Handler received notification that the grow operation is now complete");			
+		public void postGrow(int nbPlaces, List<? extends Place> continuedPlaces, List<? extends Place> newPlaces) {
+			System.out.println("Handler received notification that the grow operation is now complete");
+			System.out.print("Continued places: [");
+			for (Place p : continuedPlaces) {
+				System.out.print(p + " ");
+			}
+			System.out.println("]");
+			
+			System.out.print("New places: [");
+			for (Place p : newPlaces) {
+				System.out.print(p + " ");
+			}
+			System.out.println("]");
 		}
 		
 	}

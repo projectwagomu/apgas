@@ -57,18 +57,18 @@ public interface MalleableHandler extends Serializable {
 	 * running program. The distributed runtime has completed all its operations
 	 * and the running program can now resume normal execution. 
 	 * @param nbPlaces number of places currently running
-	 * @param currentPlaces list containing all the places currently running
+	 * @param removedPlaces list containing the places that were removed
 	 */
-	public void postShrink(int nbPlaces, List<? extends Place> currentPlaces);
+	public void postShrink(int nbPlaces, List<? extends Place> removedPlaces);
 	
 	/**
 	 * Method called after the necessary number of places were added to the
 	 * running program. The distributed runtime has completed its adjustments
 	 * and the running program can now resume normal execution.
 	 * @param nbPlaces number of places currently running
-	 * @param currentPlaces list containing all the places currently running
+	 * @param continuedPlaces list containing the places already present prior to the grow operation
 	 * @param newPlaces list containing the places that were added to the
 	 * runtime
 	 */
-	public void postGrow(int nbPlaces, List<? extends Place> currentPlaces, List<? extends Place> newPlaces);
+	public void postGrow(int nbPlaces, List<? extends Place> continuedPlaces, List<? extends Place> newPlaces);
 }
