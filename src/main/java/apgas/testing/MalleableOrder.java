@@ -77,7 +77,9 @@ public class MalleableOrder {
 			e.printStackTrace();
 		} finally {
 			try {
-				socket.close();
+				if (socket != null) {
+					socket.close();
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

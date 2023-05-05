@@ -95,7 +95,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 	 */
 	@Override
 	public void stop() {
-		System.err.println("SockerMalleableCommunicator stop() method called, closing socket and cleaning up.");
+		System.err.println(SocketMalleableCommunicator.class.getName() + " stop() method called, closing socket and cleaning up.");
 
 		// Interrupt and release the thread listening on the socket
 		listening = false;
