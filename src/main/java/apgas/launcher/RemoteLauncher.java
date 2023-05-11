@@ -15,7 +15,6 @@ import apgas.Configuration;
 import apgas.Place;
 import apgas.impl.HostManager;
 import apgas.impl.HostManager.Host;
-import apgas.util.SchedulerMessages;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -65,73 +64,6 @@ public abstract class RemoteLauncher implements Launcher {
     for (int newPlaceID : newPlaceIDs) {
 
       Host host = hostManager.getNextHost();
-      if (host == null) {
-        System.err.println("[APGAS] Warning: no valid host found; repeating last host: " + host);
-      } else {
-        hostAddress = host.getHostName();
-      }
-      host.attachPlace(new Place(newPlaceID));
-
-      if (true == verbose) {
-        System.err.println(hostManager);
-      }
-
-      boolean local = false;
-      try {
-        local = InetAddress.getByName(hostAddress).isLoopbackAddress();
-      } catch (final UnknownHostException e) {
-        e.printStackTrace();
-      }
-
-      command.add("-D" + Configuration.APGAS_PLACE_ID.getName() + "=" + newPlaceID);
-      command.add(remove);
-
-      if (local) {
-        this.process = this.processBuilder.start();
-        if (verbose) {
-          System.err.println("[APGAS] Spawning new place: " + String.join(" ", command));
-        }
-      } else {
-        startRemote(command, verbose, hostAddress);
-      }
-
-      command.remove(command.size() - 1);
-      command.remove(command.size() - 1);
-
-      synchronized (this) {
-        if (dying <= 1) {
-          processes.add(process);
-          process = null;
-        }
-      }
-      if (process != null) {
-        process.destroyForcibly();
-        throw new IllegalStateException("Shutdown in progress");
-      }
-    }
-    return newPlaceIDs;
-  }
-
-  // スケジューラと通信するために追加
-  @Override
-  public List<Integer> launch(
-      HostManager hostManager, int n, boolean verbose, SchedulerMessages message) throws Exception {
-
-    List<String> command = hostManager.getCopyOfLaunchCommand();
-
-    final String remove = command.remove(command.size() - 1);
-
-    this.processBuilder = new ProcessBuilder(command);
-    this.processBuilder.redirectOutput(Redirect.INHERIT);
-    this.processBuilder.redirectError(Redirect.INHERIT);
-    String hostAddress = null;
-
-    List<Integer> newPlaceIDs = hostManager.generateNewPlaceIds(n);
-
-    for (int newPlaceID : newPlaceIDs) {
-
-      // Host host = hostManager.getNextHost();
-      Host host = hostManager.getNextHost(message);
       if (host == null) {
         System.err.println("[APGAS] Warning: no valid host found; repeating last host: " + host);
       } else {

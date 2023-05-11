@@ -51,7 +51,7 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
   public Object executeOnKey(
       final IMap<T, V> map, final T key, final EntryProcessor<T, V> processor) {
     final long uid = ExactlyOnceExecutor.uid.incrementAndGet() + ((long) (here().id) << 32);
-    final EntryBackupProcessor backupProcessor = processor.getBackupProcessor();
+    final EntryBackupProcessor<T, V> backupProcessor = processor.getBackupProcessor();
     Object ret = null;
     try {
       ret =
@@ -77,7 +77,7 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
                 }
 
                 @Override
-                public Object process(Entry entry) {
+                public Object process(Entry<T, V> entry) {
                   return executeOnce(
                       uid,
                       entry,
@@ -93,9 +93,9 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
     return ret;
   }
 
-  public Future submitOnKey(IMap<T, V> map, T key, final EntryProcessor<T, V> processor) {
+  public Future<?> submitOnKey(IMap<T, V> map, T key, final EntryProcessor<T, V> processor) {
     final long uid = ExactlyOnceExecutor.uid.incrementAndGet() + ((long) (here().id) << 32);
-    final EntryBackupProcessor backupProcessor = processor.getBackupProcessor();
+    final EntryBackupProcessor<T, V> backupProcessor = processor.getBackupProcessor();
     return map.submitToKey(
         key,
         new EntryProcessor<T, V>() {
@@ -135,7 +135,7 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
       final EntryProcessor<T, V> processor,
       final ExecutionCallback<T> callback) {
     final long uid = ExactlyOnceExecutor.uid.incrementAndGet() + ((long) (here().id) << 32);
-    final EntryBackupProcessor backupProcessor = processor.getBackupProcessor();
+    final EntryBackupProcessor<T, V> backupProcessor = processor.getBackupProcessor();
     map.submitToKey(
         key,
         new EntryProcessor<T, V>() {

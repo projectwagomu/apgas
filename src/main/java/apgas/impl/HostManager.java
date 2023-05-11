@@ -3,7 +3,6 @@ package apgas.impl;
 import apgas.Configuration;
 import apgas.Place;
 import apgas.util.ConsolePrinter;
-import apgas.util.SchedulerMessages;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
@@ -25,8 +24,6 @@ public class HostManager {
   final ArrayList<String> launchCommand = new ArrayList<>();
   /** The List of Hosts */
   private final List<Host> hosts;
-  /** The local Host */
-  private final Host localHost;
 
   private final boolean verboseLauncher = Configuration.APGAS_VERBOSE_LAUNCHER.get();
   /**
@@ -55,15 +52,12 @@ public class HostManager {
       // for (Host h : this.hosts) h.maxPlacesPerHost = Integer.MAX_VALUE;
 
       this.hosts.get(0).attachPlace(new Place(0));
-      this.localHost = this.hosts.get(0);
     } else if (localhost != null) {
       Host host =
           new Host(localhost, numFirstPlaces); // もともとはnumFirtsPlacesではなくInteger.MAX_VALUEになってた
       host.attachPlace(new Place(0));
       this.hosts.add(host);
-      this.localHost = host;
     } else {
-      this.localHost = null;
       System.err.println("[APGAS] HostManager: Error! No valid hostnames and no localhost!");
     }
     this.placeIDGenerator = new AtomicInteger(0);
@@ -83,12 +77,12 @@ public class HostManager {
     this.hosts.add(new Host(hostname, 1));
   }
 
-  public void addHostFromMessage(SchedulerMessages message) {
-    List<String> newHostNames = message.getHostNames();
-    for (String newHostname : newHostNames) {
-      addHost(newHostname);
-    }
-  }
+//  public void addHostFromMessage(SchedulerMessages message) {
+//    List<String> newHostNames = message.getHostNames();
+//    for (String newHostname : newHostNames) {
+//      addHost(newHostname);
+//    }
+//  }
 
   public List<String> getCopyOfLaunchCommand() {
     List<String> result = new ArrayList<>();
@@ -139,38 +133,6 @@ public class HostManager {
       System.err.println("Hostmanager: getNextHost found host: " + nexHost.getHostName());
     }
     return nexHost;
-  }
-
-  // 最初，メッセージを受け取ったこのメソッドで任意のホストの追加と割り当てを
-  // しようと思ったけど，呼び出し元の同期処理がよくわかんなかったからやめた.
-  // 今はmaxPlacePerHostの値を増減させてやっているからこれは使ってない．
-  public Host getNextHost(SchedulerMessages message) {
-    Host nextHost = null;
-    List<String> newHostNames = message.getHostNames();
-    // addHost(hostName);
-    for (String hostname : newHostNames) {
-      addHost(hostname);
-    }
-    for (Host h : this.hosts) {
-      int diff = h.maxPlacesPerHost - h.attachedPlacesCount();
-      if (h.hostName.equals(message.getHostNames()) && diff > 0) {
-        nextHost = h;
-      }
-    }
-    if (nextHost == null) {
-      int difference = 0;
-      for (Host h : this.hosts) {
-        int diff = h.maxPlacesPerHost - h.attachedPlacesCount();
-        if (diff > 0 && diff > difference) {
-          difference = diff;
-          nextHost = h;
-        }
-      }
-    }
-    if (verboseLauncher) {
-      System.err.println("Hostmanager: getNextHost found host: " + nextHost.getHostName());
-    }
-    return nextHost;
   }
 
   /**

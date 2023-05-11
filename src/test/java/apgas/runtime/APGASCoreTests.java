@@ -4,10 +4,7 @@ import static apgas.Constructs.async;
 import static apgas.Constructs.asyncAt;
 import static apgas.Constructs.finish;
 import static apgas.Constructs.here;
-import static apgas.Constructs.place;
 import static apgas.Constructs.places;
-import static apgas.Constructs.shutdownMallPlacesBlocking;
-import static apgas.Constructs.startMallPlacesBlocking;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -289,71 +286,5 @@ public class APGASCoreTests {
                       globalTestCounter.home(), () -> globalTestCounter.get().incrementAndGet());
                 }));
     assertEquals(5, testCounter.get(), "The Counter should be set to 5 by the async Task.");
-  }
-
-  @Test
-  @DisplayName("Testing starting places for malleability")
-  void shouldStartMallPlaces() {
-    final int initialPlacesCount = places().size();
-    final int addOnePlace = 1;
-    startMallPlacesBlocking(addOnePlace, false);
-    int currentPlacesCount = places().size();
-    assertEquals(initialPlacesCount + addOnePlace, currentPlacesCount);
-    final int addTwoPlaces = 2;
-    startMallPlacesBlocking(addTwoPlaces, false);
-
-    finish(
-        () -> {
-          for (final Place p : places()) {
-            asyncAt(
-                p,
-                () -> {
-                  int currentPlacesCountRemote = places().size();
-                  assertEquals(
-                      initialPlacesCount + addOnePlace + addTwoPlaces, currentPlacesCountRemote);
-                  int i = 0;
-                  for (final Place pInside : places()) {
-                    assertEquals(i, pInside.id);
-                    i++;
-                  }
-                });
-          }
-        });
-
-    final int removeFirstPlaceId = places().size() / 2;
-    final Place removeFirstPlace = place(removeFirstPlaceId);
-    shutdownMallPlacesBlocking(List.of(removeFirstPlace), false);
-    currentPlacesCount = places().size();
-    assertEquals(initialPlacesCount + addOnePlace + addTwoPlaces - 1, currentPlacesCount);
-
-    final int removeSecondPlaceId = 1;
-    final Place removeSecondPlace = place(removeSecondPlaceId);
-    final int removeThirdPlaceId = places().size() - 1;
-    final Place removeThirdPlace = place(removeThirdPlaceId);
-    shutdownMallPlacesBlocking(List.of(removeSecondPlace, removeThirdPlace), false);
-    finish(
-        () -> {
-          for (final Place p : places()) {
-            asyncAt(
-                p,
-                () -> {
-                  int currentPlacesCountRemote = places().size();
-                  System.out.println(
-                      here() + " currentPlacesCountRemote=" + currentPlacesCountRemote);
-                  assertEquals(
-                      initialPlacesCount + addOnePlace + addTwoPlaces - 3,
-                      currentPlacesCountRemote);
-                  assertFalse(
-                      places().contains(removeFirstPlace),
-                      here() + " has still " + removeFirstPlace + " in its places()");
-                  assertFalse(
-                      places().contains(removeSecondPlace),
-                      here() + " has still " + removeSecondPlace + " in its places()");
-                  assertFalse(
-                      places().contains(removeThirdPlace),
-                      here() + " has still " + removeThirdPlace + " in its places()");
-                });
-          }
-        });
   }
 }

@@ -40,7 +40,7 @@ import java.util.Set;
 final class ResilientFinishState extends IncrementalEntryValue implements Serializable {
 
   /** ExactlyOnceExecutor for making sure EntryProcessors are only executed once per partition. */
-  static final transient ExactlyOnceExecutor exactlyOnceExecutor = new ExactlyOnceExecutor();
+  static final transient ExactlyOnceExecutor<GlobalID, ResilientFinishState> exactlyOnceExecutor = new ExactlyOnceExecutor<GlobalID, ResilientFinishState>();
 
   private static final long serialVersionUID = 756668504413905415L;
   /** The ID of the parent resilient finish object if any. */
@@ -49,9 +49,9 @@ final class ResilientFinishState extends IncrementalEntryValue implements Serial
   private final Map<Long, Integer> counts = new HashMap<>();
   /** The set of places that have died during this finish execution. */
   private Set<Integer> deads;
-  /** The IDs of the live immediatly nested finish objects. */
+  /** The IDs of the live immediately nested finish objects. */
   private Set<GlobalID> cids;
-  /** The IDs of the dead immediatly nested finish objects. */
+  /** The IDs of the dead immediately nested finish objects. */
   private Set<GlobalID> dids;
   /** The exceptions reported to this finish so far. */
   private List<SerializableThrowable> exceptions;

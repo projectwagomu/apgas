@@ -14,6 +14,8 @@ package apgas;
 import java.util.ArrayList;
 import java.util.List;
 
+import apgas.impl.elastic.SocketMalleableCommunicator;
+
 /**
  * The {@link Configuration} class defines the names of the system properties used to configure the
  * global runtime.
@@ -188,6 +190,48 @@ public final class Configuration<T> {
   public static final Configuration<Integer> APGAS_HOSTMANAGER_STRATEGY =
       new Configuration<>(APGAS_HOSTMANAGER_STRATEGY_PROPERTY, 0, Integer.class);
 
+  /**
+   * This String is used to define the property setting which indicated if the running APGAS program
+   * is elastic. 
+   * Possible values are:
+   * <ul>
+   * <li>fixed: (default), no change in the number of places during execution
+   * <li>evolving: (Not implemented yet), the running program may initiate requests for additional places / release some during execution
+   * <li>malleable: the running program may dynamically change the number of running places following orders given by the scheduler
+   * </ul>
+   */
+  private static final String APGAS_ELASTIC_PROPERTY = "apgas.elastic";
+
+  /**
+   * Possible value for configuration {@link #APGAS_ELASTIC}.
+   * This value sets the number of places to remain fixed throughout execution.
+   */
+  public static final String APGAS_ELASTIC_FIXED = "fixed";
+  
+  /**
+   * Possible value for configuration {@link #APGAS_ELASTIC}.
+   * This value sets the runtime to be malleable. A malleable communicator will be prepared by the runtime to receive instructions from the scheduler. 
+   * The programmer should call method {@link ExtendedConstructs#defineMalleableHandle(apgas.impl.elastic.MalleableHandler)}
+   * to define the actions to perform before and after a malleable change.
+   */
+  public static final String APGAS_ELASTIC_MALLEABLE = "malleable";
+  
+  /**
+   * Property defining if the program is allowed to change the number of running processes during execution.
+   */
+  public static final Configuration<String> APGAS_ELASTIC = new Configuration<>(APGAS_ELASTIC_PROPERTY, APGAS_ELASTIC_FIXED, String.class);
+  
+  /**
+   * String used to define the class used as malleable communicator
+   */
+  private static final String APGAS_MALLEABLE_COMMUNICATOR_PROPERTY = "apgas.malleable_communicator";
+  /**
+   * Property defining the class used to communicate with the scheduler when a
+   * malleable program is running
+   */
+  public static final Configuration<String> APGAS_MALLEABLE_COMMUNICATOR =
+	  new Configuration<>(APGAS_MALLEABLE_COMMUNICATOR_PROPERTY, SocketMalleableCommunicator.class.getCanonicalName(), String.class);
+  
   private final String name;
   private final Class<T> propertyType;
   private T defaultValue;
@@ -232,7 +276,7 @@ public final class Configuration<T> {
   }
 
   public static void printConfigs() {
-    List<Configuration> allConfigs = new ArrayList<>();
+    List<Configuration<?>> allConfigs = new ArrayList<>();
     allConfigs.add(APGAS_PLACES);
     allConfigs.add(APGAS_THREADS);
     allConfigs.add(APGAS_IMMEDIATE_THREADS);
@@ -250,17 +294,19 @@ public final class Configuration<T> {
     allConfigs.add(APGAS_NETWORK_INTERFACE);
     allConfigs.add(APGAS_CONSOLEPRINTER);
     allConfigs.add(APGAS_HOSTMANAGER_STRATEGY);
+    allConfigs.add(APGAS_ELASTIC);
+    allConfigs.add(APGAS_MALLEABLE_COMMUNICATOR);
 
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("APGAS config on " + Constructs.here() + ":\n");
-    for (final Configuration c : allConfigs) {
+    for (final Configuration<?> c : allConfigs) {
       stringBuilder.append("  " + c.getName() + "=" + c.get() + "\n");
     }
     System.out.println(stringBuilder.toString());
   }
 
   public static void initAll() {
-    List<Configuration> allConfigs = new ArrayList<>();
+    List<Configuration<?>> allConfigs = new ArrayList<>();
     allConfigs.add(APGAS_PLACES);
     allConfigs.add(APGAS_THREADS);
     allConfigs.add(APGAS_IMMEDIATE_THREADS);
@@ -278,7 +324,10 @@ public final class Configuration<T> {
     allConfigs.add(APGAS_NETWORK_INTERFACE);
     allConfigs.add(APGAS_CONSOLEPRINTER);
     allConfigs.add(APGAS_HOSTMANAGER_STRATEGY);
-    for (final Configuration c : allConfigs) {
+    allConfigs.add(APGAS_ELASTIC);
+    allConfigs.add(APGAS_MALLEABLE_COMMUNICATOR);
+    
+    for (final Configuration<?> c : allConfigs) {
       c.get();
     }
   }
@@ -293,6 +342,7 @@ public final class Configuration<T> {
    *
    * @return The Value of this Configuration
    */
+  @SuppressWarnings("unchecked")
   public synchronized T get() {
 
     if (this.cachedValue != null) {

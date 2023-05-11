@@ -13,9 +13,7 @@ package apgas;
 
 import apgas.impl.SerializableRunnable;
 import apgas.impl.Worker;
-import apgas.util.SchedulerMessages;
 import com.hazelcast.core.Member;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -206,37 +204,5 @@ public final class Constructs {
    */
   public static Worker getCurrentWorker() {
     return GlobalRuntime.getRuntimeImpl().getCurrentWorker();
-  }
-
-  public static void startMallPlaces(int n, boolean verbose) {
-    GlobalRuntime.getRuntimeImpl().startMallPlaces(n, verbose);
-  }
-
-  public static List<Integer> startMallPlacesBlocking(int n, boolean verbose) {
-    return GlobalRuntime.getRuntimeImpl().startMallPlacesBlocking(n, verbose);
-  }
-
-  public static void shutdownMallPlaces(final List<Place> toBeRemoved, boolean verbose) {
-    GlobalRuntime.getRuntimeImpl().shutdownMallPlaces(toBeRemoved, verbose);
-  }
-
-  public static void shutdownMallPlacesBlocking(final List<Place> toBeRemoved, boolean verbose) {
-    GlobalRuntime.getRuntimeImpl().shutdownMallPlacesBlocking(toBeRemoved, verbose);
-  }
-
-  public static SchedulerMessages receiveSchedulerMessage() {
-    return GlobalRuntime.getRuntimeImpl().receiveSchedulerMessage();
-  }
-
-  public static void sendRemovedHosts() {
-    GlobalRuntime.getRuntimeImpl().sendRemovedHosts();
-  }
-
-  public static boolean closeSocket() throws IOException {
-    return GlobalRuntime.getRuntimeImpl().closeSocket();
-  }
-
-  public static void decrementPlaceIds(List<Place> placesToBeRemoved) {
-    GlobalRuntime.getRuntimeImpl().decrementPlaceIds(placesToBeRemoved);
   }
 }
