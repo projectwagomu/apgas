@@ -177,11 +177,6 @@ public class HostManager {
 		return Stream.generate(() -> placeIDGenerator.incrementAndGet()).limit(count).collect(Collectors.toList());
 	}
 
-	public void decrementPlaceIds(List<Place> PlacesToBeRemove) {
-		// for (int i = 0; i < PlacesToBeRemove.size(); i++)
-		// placeIDGenerator.decrementAndGet();
-	}
-
 	public void buildLaunchCommand(String masterIp, String classToStart) {
 		this.launchCommand.add(Configuration.APGAS_JAVA.get());
 		RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();

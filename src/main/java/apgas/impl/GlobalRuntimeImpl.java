@@ -1032,7 +1032,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				e.printStackTrace();
 			}
 		}
-		this.hostManager.decrementPlaceIds(toRelease);
 		return freedHosts;
 	}
 
@@ -1071,10 +1070,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		} catch (IOException ex) {
 			return false;
 		}
-	}
-
-	public void decrementPlaceIds(List<Place> PlacesToBeRemoved) {
-		this.hostManager.decrementPlaceIds(PlacesToBeRemoved);
 	}
 
 	/**
