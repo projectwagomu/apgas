@@ -12,7 +12,9 @@ public class ResilientPlaceGroup implements Serializable {
 
 	/** Serial Version UID */
 	private static final long serialVersionUID = -4918341729994198948L;
+	/** Array containing the Place objects for the current execution */
 	private final Place[] array;
+	/** Largest place number currently allocated */
 	private int max;
 
 	public ResilientPlaceGroup(int size) {

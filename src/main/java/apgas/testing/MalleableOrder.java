@@ -17,17 +17,16 @@ import apgas.impl.elastic.SocketMalleableCommunicator;
  */
 public class MalleableOrder {
 
-	public static final String JOB_IP = "job.ip";
-	public static final String JOB_PORT = "job.port";
+	private static final String JOB_IP = "job.ip";
+	private static final String JOB_PORT = "job.port";
 
-	public static final String DEFAULT_IP = "127.0.0.1";
-	public static final String DEFAULT_PORT = "8081";
+	private static final String DEFAULT_IP = "127.0.0.1";
+	private static final String DEFAULT_PORT = "8081";
 
 	/**
 	 * This main takes different arguments depending on the on the type of order to
-	 * sent to the running malleable program.
-	 * <p>
-	 * <h1>shrink case</h1> The arguments expected are:
+	 * sent to the running malleable program.<br>
+	 * <h4>shrink case</h4> The arguments expected are:
 	 * <ul>
 	 * <li>shrink
 	 * <li>number of host to release
@@ -36,15 +35,12 @@ public class MalleableOrder {
 	 * This program then expects to receive the released hosts from the running
 	 * program, one host per line. These hostnames are printed on the standard
 	 * output of this program.
-	 * <p>
-	 * <h1>grow case</h1> The arguments expected are:
+	 * <h4>grow case</h4> The arguments expected are:
 	 * <ul>
 	 * <li>grow
 	 * <li>number of hosts to grow by
 	 * <li>the hosts on which to spawn a new process
 	 * </ul>
-	 * <p>
-	 * 
 	 * 
 	 * @param args program arguments
 	 */

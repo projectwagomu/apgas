@@ -57,6 +57,10 @@ public final class Task extends RecursiveAction implements SerializableRunnable 
 		this.parent = parent;
 	}
 
+	/**
+	 * Returns the finish managing this task
+	 * @return the finish to which this task belongs to
+	 */
 	public Finish getFinish() {
 		return finish;
 	}

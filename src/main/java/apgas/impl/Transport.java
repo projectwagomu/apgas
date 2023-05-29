@@ -113,7 +113,10 @@ public class Transport implements InitialMembershipListener {
 		config.addListConfig(new ListConfig(APGAS_PLACES).setBackupCount(backupCount));
 	}
 
-	public boolean startHazelcast() {
+	/**
+	 * Start the Hazelcast library to establish connection with the other processes in the runtime
+	 */
+	public void startHazelcast() {
 		try {
 			hazelcast = Hazelcast.newHazelcastInstance(config);
 			me = hazelcast.getCluster().getLocalMember();
@@ -124,7 +127,6 @@ public class Transport implements InitialMembershipListener {
 					"[APGAS] startHazelcast: " + ManagementFactory.getRuntimeMXBean().getName() + " throws Exception");
 			t.printStackTrace();
 		}
-		return true;
 	}
 
 	/** Starts monitoring cluster membership events. */
@@ -246,11 +248,19 @@ public class Transport implements InitialMembershipListener {
 		runtime.updatePlaces(added, new ArrayList<>());
 	}
 
+	/**
+	 * Method used to remove a member of the cluster from the transport layer
+	 * @param member the member to remove
+	 */
 	public void removePlace(Member member) {
 		Integer placeID = member.getIntAttribute(APGAS_PLACE_ID);
 		removePlace(placeID);
 	}
 
+	/**
+	 * Removes the place with the specified id from the distributed runtime.
+	 * @param placeID the id of the place to remove
+	 */
 	public void removePlace(int placeID) {
 		this.mapPlaceIDtoMember.remove(placeID);
 		List<Integer> removed = new ArrayList<>();
@@ -278,6 +288,10 @@ public class Transport implements InitialMembershipListener {
 		this.addPlace(memberAttributeEvent.getMember());
 	}
 
+	/** Provides a map from integers to member objects
+	 *
+	 * @return map
+	 */
 	public Map<Integer, Member> getMembers() {
 		return mapPlaceIDtoMember;
 	}

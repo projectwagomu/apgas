@@ -21,6 +21,7 @@ public abstract class MalleableCommunicator {
 	 * Method called when the running program moves into a state where it is capable
 	 * of changing its number of running hosts and as a result may receive orders
 	 * from the scheduler.
+	 * @throws Exception if thrown by the underlying implementation
 	 */
 	public abstract void start() throws Exception;
 

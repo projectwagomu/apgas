@@ -5,10 +5,14 @@ import static apgas.Constructs.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import apgas.ExtendedConstructs;
 import apgas.Place;
 import apgas.impl.elastic.MalleableHandler;
 
+/**
+ * Simplistic program illustrating how to implement a malleable program
+ * @author Patrick Finnerty
+ *
+ */
 public class DummyApplication {
 
 	static class DummyHandler implements MalleableHandler {
@@ -82,7 +86,7 @@ public class DummyApplication {
 		});
 
 		// Enable malleability by defining the handler
-		ExtendedConstructs.defineMalleableHandle(new DummyHandler());
+		defineMalleableHandle(new DummyHandler());
 
 		// Start dummy computation for the indicated time
 		long startWait = System.nanoTime();

@@ -31,6 +31,10 @@ public final class Worker extends ForkJoinWorkerThread {
 		this.myID = myID;
 	}
 
+	/** Obtain the id for this worker
+	 * 
+	 * @return this id of this worker
+	 */
 	public int getMyID() {
 		return myID;
 	}

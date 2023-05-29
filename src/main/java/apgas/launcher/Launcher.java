@@ -26,7 +26,7 @@ public interface Launcher {
 	 * @param n           number of processes to launch
 	 * @param verbose     dumps the executed commands to stderr
 	 * @throws Exception if launching fails
-	 * @return
+	 * @return the place ids of the newly launched processes
 	 */
 	List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception;
 

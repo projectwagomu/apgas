@@ -9,15 +9,21 @@ import java.net.InetAddress;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Helper class to avoid mixing outputs from different places and to add a timestamp
+ * @author Jonas Posner
+ */
 public class ConsolePrinter implements Serializable {
 
 	/** Serial Version UID */
 	private static final long serialVersionUID = 6535048433179703185L;
 
+	/** Stores the state of the {@link Configuration#APGAS_CONSOLEPRINTER} */
 	private static final boolean PRINT = Configuration.APGAS_CONSOLEPRINTER.get();
 
 	private static final ConsolePrinter instance = new ConsolePrinter();
 
+	/** Obtain the printer instance for this process */
 	public static synchronized ConsolePrinter getInstance() {
 		return ConsolePrinter.instance;
 	}

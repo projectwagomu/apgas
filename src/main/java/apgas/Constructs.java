@@ -13,6 +13,8 @@ package apgas;
 
 import apgas.impl.SerializableRunnable;
 import apgas.impl.Worker;
+import apgas.impl.elastic.MalleableHandler;
+
 import com.hazelcast.core.Member;
 import java.io.Serializable;
 import java.util.List;
@@ -184,6 +186,7 @@ public final class Constructs {
 	/**
 	 * Returns the liveness of a place
 	 *
+	 * @param place the place whose state is to be checked
 	 * @return isDead
 	 */
 	public static boolean isDead(Place place) {
@@ -193,7 +196,8 @@ public final class Constructs {
 	/**
 	 * Returns the next place
 	 *
-	 * @return the next place
+	 * @param place the place whose next place should be returned
+	 * @return the place following the place given as parameter
 	 */
 	public static Place nextPlace(Place place) {
 		return GlobalRuntime.getRuntimeImpl().nextPlace(place);
@@ -202,7 +206,8 @@ public final class Constructs {
 	/**
 	 * Returns the previous place
 	 *
-	 * @return the previuos place
+	 * @param place the place whose previous place should be returned
+	 * @return the previous place
 	 */
 	public static Place prevPlace(Place place) {
 		return GlobalRuntime.getRuntimeImpl().prevPlace(place);
@@ -215,5 +220,20 @@ public final class Constructs {
 	 */
 	public static Worker getCurrentWorker() {
 		return GlobalRuntime.getRuntimeImpl().getCurrentWorker();
+	}
+	
+	/**
+	 * Method used to define the handler which will be responsible for interacting
+	 * with the running program so that it correctly handles the transitions between
+	 * place count changes. The program becomes malleable as a result of calling
+	 * this method. This is because a socket is opened as a result of this call,
+	 * effectively making it possible to receive shrink of grow orders from the job
+	 * scheduler.
+	 * 
+	 * @param handler the handler now in charge of handling malleable shrink and
+	 *                grow orders from the job scheduler
+	 */
+	public static void defineMalleableHandle(MalleableHandler handler) {
+		GlobalRuntime.getRuntimeImpl().setMalleableHandler(handler);
 	}
 }

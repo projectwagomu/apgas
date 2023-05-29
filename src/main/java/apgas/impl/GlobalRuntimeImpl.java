@@ -178,30 +178,24 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		this.finishFactory = this.resilient ? new ResilientFinishOpt.Factory() : new DefaultFinish.Factory();
 
 		// initialize scheduler
-		this.pool = new MyForkJoinPool(Configuration.APGAS_THREADS.get(), maxThreads, new WorkerFactory(), null, false);
+		pool = new MyForkJoinPool(Configuration.APGAS_THREADS.get(), maxThreads, new WorkerFactory(), null);
 
-		this.immediatePool = (ThreadPoolExecutor) Executors
+		immediatePool = (ThreadPoolExecutor) Executors
 				.newFixedThreadPool(Configuration.APGAS_IMMEDIATE_THREADS.get());
 
-		// initialize transport
-		this.transport = new Transport(this, master, ip, launcherName, backupCount, placeID);
-		this.transport.startHazelcast();
-		// try {
-		// TimeUnit.SECONDS.sleep(1);
-		// } catch (InterruptedException e) {
-		// e.printStackTrace();
-		// }
+		// Initialize transport
+		transport = new Transport(this, master, ip, launcherName, backupCount, placeID);
+		transport.startHazelcast();
 
+		// If this is the master, launch the other processes 
 		if (this.isMaster) {
 			launchPlaces(master, ip);
 		}
-
 		waitForAllHazelcastMembers();
 
-		// initialize here
-		this.here = this.transport.here();
-		this.home = new Place(this.here);
-		this.resilientFinishMap = this.resilient ? this.transport.getResilientFinishMap() : null;
+		here = transport.here();
+		home = new Place(this.here);
+		resilientFinishMap = this.resilient ? this.transport.getResilientFinishMap() : null;
 
 		if (verboseLauncher) {
 			System.err.println("[APGAS] New place was started at " + this.transport.getAddress());
@@ -671,6 +665,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	/**
 	 * Returns the liveness of a place
 	 *
+	 * @param place the place whose state is to be checked
 	 * @return isDead
 	 */
 	public boolean isDead(Place place) {
@@ -680,6 +675,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	/**
 	 * Returns the next place
 	 *
+	 * @param place the place whose successor is to be returned 
 	 * @return the next place
 	 */
 	public Place nextPlace(Place place) {
@@ -694,8 +690,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
 	/**
 	 * Returns the previous place
-	 *
-	 * @return the previuos place
+	 * 
+	 * @param place the place whose predecessor should be returned
+	 * @return the previous place
 	 */
 	public Place prevPlace(Place place) {
 		List<? extends Place> tmpPlaces = new ArrayList<>(places());
@@ -994,7 +991,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	 * called by the {@link MalleableCommunicator} after calling the pre-hook
 	 * provided by the programmer
 	 * 
-	 * @param toBeRemoved list of places to release
+	 * @param toRelease list of places to release
 	 * @return the name of the hosts of freed processes in a list
 	 */
 	public List<String> shutdownMallPlacesBlocking(List<Place> toRelease) {

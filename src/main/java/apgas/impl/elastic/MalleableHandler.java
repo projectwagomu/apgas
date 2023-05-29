@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 
 import apgas.Constructs;
-import apgas.ExtendedConstructs;
 import apgas.Place;
 
 /**
@@ -21,7 +20,7 @@ import apgas.Place;
  * <p>
  * Programmers willing to make their program malleable should define the handler
  * for their specific program using
- * {@link ExtendedConstructs#defineMalleableHandle(MalleableHandler)}
+ * {@link Constructs#defineMalleableHandle(MalleableHandler)}
  * 
  * @author Patrick Finnerty
  *
