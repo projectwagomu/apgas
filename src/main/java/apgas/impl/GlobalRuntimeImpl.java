@@ -60,10 +60,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-/** The {@link GlobalRuntimeImpl} class implements the {@link GlobalRuntime} class. */
+/**
+ * The {@link GlobalRuntimeImpl} class implements the {@link GlobalRuntime}
+ * class.
+ */
 public final class GlobalRuntimeImpl extends GlobalRuntime {
 
-	/** Synchronization Object for the Malleability Methods: AddPlaces and RemovePlaces */
+	/**
+	 * Synchronization Object for the Malleability Methods: AddPlaces and
+	 * RemovePlaces
+	 */
 	static final Object MALLEABILITY_SYNC = new Object();
 
 	private static GlobalRuntimeImpl runtime;
@@ -75,9 +81,15 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	final ThreadPoolExecutor immediatePool;
 	/** This place's ID. */
 	final int here;
-	/** The unit in charge of communicating with the scheduler to receive incoming malleable requests */
+	/**
+	 * The unit in charge of communicating with the scheduler to receive incoming
+	 * malleable requests
+	 */
 	public transient MalleableCommunicator malleableCommunicator;
-	/** The handler set by the user in charge of informing the running program of incoming changes */
+	/**
+	 * The handler set by the user in charge of informing the running program of
+	 * incoming changes
+	 */
 	public transient MalleableHandler malleableHandler;
 	/** The pool for this global runtime instance. */
 	final MyForkJoinPool pool;
@@ -163,26 +175,22 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			GlobalRuntime.readyCounter = new AtomicInteger(this.initialPlaces);
 		}
 
-		this.finishFactory =
-				this.resilient ? new ResilientFinishOpt.Factory() : new DefaultFinish.Factory();
+		this.finishFactory = this.resilient ? new ResilientFinishOpt.Factory() : new DefaultFinish.Factory();
 
 		// initialize scheduler
-		this.pool =
-				new MyForkJoinPool(
-						Configuration.APGAS_THREADS.get(), maxThreads, new WorkerFactory(), null, false);
+		this.pool = new MyForkJoinPool(Configuration.APGAS_THREADS.get(), maxThreads, new WorkerFactory(), null, false);
 
-		this.immediatePool =
-				(ThreadPoolExecutor)
-				Executors.newFixedThreadPool(Configuration.APGAS_IMMEDIATE_THREADS.get());
+		this.immediatePool = (ThreadPoolExecutor) Executors
+				.newFixedThreadPool(Configuration.APGAS_IMMEDIATE_THREADS.get());
 
 		// initialize transport
 		this.transport = new Transport(this, master, ip, launcherName, backupCount, placeID);
 		this.transport.startHazelcast();
-		//    try {
-		//      TimeUnit.SECONDS.sleep(1);
-		//    } catch (InterruptedException e) {
-		//      e.printStackTrace();
-		//    }
+		// try {
+		// TimeUnit.SECONDS.sleep(1);
+		// } catch (InterruptedException e) {
+		// e.printStackTrace();
+		// }
 
 		if (this.isMaster) {
 			launchPlaces(master, ip);
@@ -208,18 +216,21 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			// The runtime is malleable, need to initialize the malleable communicator
 			String communicatorClassName = Configuration.APGAS_MALLEABLE_COMMUNICATOR.get();
 			try {
-				malleableCommunicator = (MalleableCommunicator) Class.forName(communicatorClassName).getDeclaredConstructor().newInstance();
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-					| NoSuchMethodException | SecurityException | ClassNotFoundException e) {
-				System.err.println("Something went wrong when trying to instanciate malleable communicator " + communicatorClassName);
+				malleableCommunicator = (MalleableCommunicator) Class.forName(communicatorClassName)
+						.getDeclaredConstructor().newInstance();
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException
+					| ClassNotFoundException e) {
+				System.err.println("Something went wrong when trying to instanciate malleable communicator "
+						+ communicatorClassName);
 				e.printStackTrace();
 				System.err.println("The specified class should have a public constructor with no parameters.");
 			}
 			if (verboseLauncher) {
-				System.err.println("Initialized Malleable Communicator " + malleableCommunicator.getClass().getCanonicalName());
+				System.err.println(
+						"Initialized Malleable Communicator " + malleableCommunicator.getClass().getCanonicalName());
 			}
 		}
-
 
 		// start monitoring cluster
 		this.transport.start();
@@ -235,8 +246,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		reduceReadyCounter();
 
 		if (this.here == 0 && verboseLauncher) {
-			System.out.println(
-					"[APGAS] Place startup time: " + ((System.nanoTime() - begin) / 1E9) + " sec");
+			System.out.println("[APGAS] Place startup time: " + ((System.nanoTime() - begin) / 1E9) + " sec");
 		}
 	}
 
@@ -263,16 +273,12 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			final int _h = this.here;
 			try {
 				final boolean _verboseLauncher = this.verboseLauncher;
-				this.transport.send(
-						0,
-						new UncountedTask(
-								() -> {
-									int value = GlobalRuntime.readyCounter.decrementAndGet();
-									if (true == _verboseLauncher) {
-										System.err.println(
-												"[APGAS] " + _h + " on place 0 decremented ready counter, is now " + value);
-									}
-								}));
+				this.transport.send(0, new UncountedTask(() -> {
+					int value = GlobalRuntime.readyCounter.decrementAndGet();
+					if (true == _verboseLauncher) {
+						System.err.println("[APGAS] " + _h + " on place 0 decremented ready counter, is now " + value);
+					}
+				}));
 			} catch (final Throwable e) {
 				e.printStackTrace();
 			}
@@ -282,11 +288,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
 			while (GlobalRuntime.readyCounter.get() > 0) {
 				if (true == verboseLauncher) {
-					System.err.println(
-							"[APGAS] "
-									+ here
-									+ " not all constructors are ready, waiting...."
-									+ GlobalRuntime.readyCounter.get());
+					System.err.println("[APGAS] " + here + " not all constructors are ready, waiting...."
+							+ GlobalRuntime.readyCounter.get());
 				}
 				try {
 					TimeUnit.SECONDS.sleep(1);
@@ -303,23 +306,15 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			try {
 				TimeUnit.SECONDS.sleep(1);
 				if (true == this.verboseLauncher) {
-					System.err.println(
-							"[APGAS] "
-									+ ManagementFactory.getRuntimeMXBean().getName()
-									+ ", "
-									+ this.home
-									+ ": not all places are started, places.size()= "
-									+ places.size()
-									+ ", initialPlaces="
-									+ this.initialPlaces);
+					System.err.println("[APGAS] " + ManagementFactory.getRuntimeMXBean().getName() + ", " + this.home
+							+ ": not all places are started, places.size()= " + places.size() + ", initialPlaces="
+							+ this.initialPlaces);
 				}
 
 				final long now = System.nanoTime();
 				if ((now - beforeMaxPlaces) / 1E9 > timeoutStarting) {
-					System.err.println(
-							"[APGAS] "
-									+ ManagementFactory.getRuntimeMXBean().getName()
-									+ " ran into timeout, exit JVM");
+					System.err.println("[APGAS] " + ManagementFactory.getRuntimeMXBean().getName()
+							+ " ran into timeout, exit JVM");
 					System.exit(40);
 				}
 			} catch (final InterruptedException e) {
@@ -330,15 +325,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 
 		if (verboseLauncher) {
-			System.err.println(
-					"[APGAS] "
-							+ ManagementFactory.getRuntimeMXBean().getName()
-							+ ", "
-							+ this.home
-							+ ": all places are started, places.size()= "
-							+ places.size()
-							+ ", initialPlaces="
-							+ this.initialPlaces);
+			System.err.println("[APGAS] " + ManagementFactory.getRuntimeMXBean().getName() + ", " + this.home
+					+ ": all places are started, places.size()= " + places.size() + ", initialPlaces="
+					+ this.initialPlaces);
 		}
 	}
 
@@ -349,17 +338,15 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			Thread.enumerate(thread);
 			for (final Thread t : thread) {
 				if (t != null && t.getId() == 1) {
-					new Thread(
-							() -> {
-								while (t.isAlive()) {
-									try {
-										t.join();
-									} catch (final InterruptedException e) {
-									}
-								}
-								shutdown();
-							})
-					.start();
+					new Thread(() -> {
+						while (t.isAlive()) {
+							try {
+								t.join();
+							} catch (final InterruptedException e) {
+							}
+						}
+						shutdown();
+					}).start();
 					break;
 				}
 			}
@@ -386,7 +373,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	/**
 	 * Updates the place collections.
 	 *
-	 * @param added added places
+	 * @param added   added places
 	 * @param removed removed places
 	 */
 	public void updatePlaces(List<Integer> added, List<Integer> removed) {
@@ -407,24 +394,23 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			return;
 		}
 		final Consumer<Place> localHandler = this.handler;
-		execute(
-				new RecursiveAction() {
-					private static final long serialVersionUID = 1052937749744648347L;
+		execute(new RecursiveAction() {
+			private static final long serialVersionUID = 1052937749744648347L;
 
-					@Override
-					public void compute() {
-						final Worker worker = (Worker) Thread.currentThread();
-						worker.task = null; // a handler is not a task (yet)
-						for (final int id : removed) {
-							ResilientFinishState.purge(id);
-						}
-						if (localHandler != null) {
-							for (final int id : removed) {
-								localHandler.accept(new Place(id));
-							}
-						}
+			@Override
+			public void compute() {
+				final Worker worker = (Worker) Thread.currentThread();
+				worker.task = null; // a handler is not a task (yet)
+				for (final int id : removed) {
+					ResilientFinishState.purge(id);
+				}
+				if (localHandler != null) {
+					for (final int id : removed) {
+						localHandler.accept(new Place(id));
 					}
-				});
+				}
+			}
+		});
 	}
 
 	@Override
@@ -475,20 +461,21 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * Runs {@code f} then waits for all tasks transitively spawned by {@code f} to complete.
+	 * Runs {@code f} then waits for all tasks transitively spawned by {@code f} to
+	 * complete.
 	 *
-	 * <p>If {@code f} or the tasks transitively spawned by {@code f} have uncaught exceptions then
-	 * {@code finish(f)} then throws a {@link MultipleException} that collects these uncaught
-	 * exceptions.
+	 * <p>
+	 * If {@code f} or the tasks transitively spawned by {@code f} have uncaught
+	 * exceptions then {@code finish(f)} then throws a {@link MultipleException}
+	 * that collects these uncaught exceptions.
 	 *
 	 * @param f the function to run
 	 * @throws MultipleException if there are uncaught exceptions
 	 */
 	public void finish(SerializableJob f) {
 		final Worker worker = currentWorker();
-		final Finish finish =
-				finishFactory.make(
-						worker == null || worker.task == null ? NullFinish.SINGLETON : worker.task.finish);
+		final Finish finish = finishFactory
+				.make(worker == null || worker.task == null ? NullFinish.SINGLETON : worker.task.finish);
 		new Task(finish, f, here).finish(worker);
 		final List<Throwable> exceptions = finish.exceptions();
 		if (exceptions != null) {
@@ -497,15 +484,16 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * Evaluates {@code f}, waits for all the tasks transitively spawned by {@code f}, and returns the
-	 * result.
+	 * Evaluates {@code f}, waits for all the tasks transitively spawned by
+	 * {@code f}, and returns the result.
 	 *
-	 * <p>If {@code f} or the tasks transitively spawned by {@code f} have uncaught exceptions then
-	 * {@code finish(F)} then throws a {@link MultipleException} that collects these uncaught
-	 * exceptions.
+	 * <p>
+	 * If {@code f} or the tasks transitively spawned by {@code f} have uncaught
+	 * exceptions then {@code finish(F)} then throws a {@link MultipleException}
+	 * that collects these uncaught exceptions.
 	 *
 	 * @param <T> the type of the result
-	 * @param f the function to run
+	 * @param f   the function to run
 	 * @return the result of the evaluation
 	 */
 	public <T> T finish(Callable<T> f) {
@@ -515,14 +503,14 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * Submits a new local task to the global runtime with body {@code f} and returns immediately.
+	 * Submits a new local task to the global runtime with body {@code f} and
+	 * returns immediately.
 	 *
 	 * @param f the function to run
 	 */
 	public void asyncFork(SerializableJob f) {
 		final Worker worker = currentWorker();
-		final Finish finish =
-				worker == null || worker.task == null ? NullFinish.SINGLETON : worker.task.finish;
+		final Finish finish = worker == null || worker.task == null ? NullFinish.SINGLETON : worker.task.finish;
 
 		finish.spawn(here);
 		Task task = new Task(finish, f, here);
@@ -530,7 +518,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * Submits a new task to the global runtime to be run at {@link Place} {@code p} with body {@code
+	 * Submits a new task to the global runtime to be run at {@link Place} {@code p}
+	 * with body {@code
 	 * f} and returns immediately.
 	 *
 	 * @param p the place of execution
@@ -538,17 +527,17 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	 */
 	public void asyncAt(Place p, SerializableJob f) {
 		final Worker worker = currentWorker();
-		final Finish finish =
-				worker == null || worker.task == null ? NullFinish.SINGLETON : worker.task.finish;
+		final Finish finish = worker == null || worker.task == null ? NullFinish.SINGLETON : worker.task.finish;
 		finish.spawn(p.id);
 
 		new Task(finish, f, here).asyncAt(p.id);
 	}
 
 	/**
-	 * Submits an uncounted task to the global runtime to be run at {@link Place} {@code p} with body
-	 * {@code f} and returns immediately. The termination of this task is not tracked by the enclosing
-	 * finish. Exceptions thrown by the task are ignored.
+	 * Submits an uncounted task to the global runtime to be run at {@link Place}
+	 * {@code p} with body {@code f} and returns immediately. The termination of
+	 * this task is not tracked by the enclosing finish. Exceptions thrown by the
+	 * task are ignored.
 	 *
 	 * @param p the place of execution
 	 * @param f the function to run
@@ -558,8 +547,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * /** Submits an immediate task to the global runtime to be run at {@link Place} {@code p} with
-	 * body {@code f}.
+	 * /** Submits an immediate task to the global runtime to be run at
+	 * {@link Place} {@code p} with body {@code f}.
 	 *
 	 * @param p the place of execution
 	 * @param f the function to run
@@ -569,21 +558,22 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * /** Submits an immediate task to the global runtime to be run at {@link Place} {@code p} with
-	 * body {@code f}.
+	 * /** Submits an immediate task to the global runtime to be run at
+	 * {@link Place} {@code p} with body {@code f}.
 	 *
 	 * @param member the hazelcast member of execution
-	 * @param f the function to run
+	 * @param f      the function to run
 	 */
 	public void immediateAsyncAt(Member member, SerializableRunnable f) {
 		new ImmediateTask(f).immediateAsyncAt(member);
 	}
 
 	/**
-	 * Runs {@code f} at {@link Place} {@code p} and waits for all the tasks transitively spawned by
-	 * {@code f}.
+	 * Runs {@code f} at {@link Place} {@code p} and waits for all the tasks
+	 * transitively spawned by {@code f}.
 	 *
-	 * <p>Equivalent to {@code finish(() -> asyncAt(p, f))}
+	 * <p>
+	 * Equivalent to {@code finish(() -> asyncAt(p, f))}
 	 *
 	 * @param p the place of execution
 	 * @param f the function to run
@@ -593,26 +583,22 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * Evaluates {@code f} at {@link Place} {@code p}, waits for all the tasks transitively spawned by
-	 * {@code f}, and returns the result.
+	 * Evaluates {@code f} at {@link Place} {@code p}, waits for all the tasks
+	 * transitively spawned by {@code f}, and returns the result.
 	 *
 	 * @param <T> the type of the result (must implement java.io.Serializable)
-	 * @param p the place of execution
-	 * @param f the function to run
+	 * @param p   the place of execution
+	 * @param f   the function to run
 	 * @return the result of the evaluation
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Serializable> T at(Place p, SerializableCallable<T> f) {
 		final GlobalID id = new GlobalID();
 		final Place _home = here();
-		Constructs.finish(
-				() ->
-				Constructs.asyncAt(
-						p,
-						() -> {
-							final T _result = f.call();
-							Constructs.asyncAt(_home, () -> id.putHere(_result));
-						}));
+		Constructs.finish(() -> Constructs.asyncAt(p, () -> {
+			final T _result = f.call();
+			Constructs.asyncAt(_home, () -> id.putHere(_result));
+		}));
 		return (T) id.removeHere();
 	}
 
@@ -659,7 +645,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * Submits a task to the pool making sure that a thread will be available to run it.
+	 * Submits a task to the pool making sure that a thread will be available to run
+	 * it.
 	 *
 	 * @param task the task
 	 */
@@ -732,8 +719,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * reads in the Hosts from the given Filename in Configuration.APGAS_HOSTFILE. This file is loaded
-	 * and the Hosts are extracted.
+	 * reads in the Hosts from the given Filename in Configuration.APGAS_HOSTFILE.
+	 * This file is loaded and the Hosts are extracted.
 	 *
 	 * @return The List of Hosts read in.
 	 */
@@ -764,20 +751,12 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		Launcher localLauncher = null;
 		if (this.isMaster && launcherName != null) {
 			try {
-				localLauncher =
-						(Launcher) Class.forName(launcherName).getDeclaredConstructor().newInstance();
-			} catch (InstantiationException
-					| IllegalAccessException
-					| ExceptionInInitializerError
-					| ClassNotFoundException
-					| NoClassDefFoundError
-					| ClassCastException
-					| NoSuchMethodException
+				localLauncher = (Launcher) Class.forName(launcherName).getDeclaredConstructor().newInstance();
+			} catch (InstantiationException | IllegalAccessException | ExceptionInInitializerError
+					| ClassNotFoundException | NoClassDefFoundError | ClassCastException | NoSuchMethodException
 					| InvocationTargetException e) {
 				System.err.println(
-						"[APGAS] Unable to instantiate launcher: "
-								+ launcherName
-								+ ". Using default launcher (ssh).");
+						"[APGAS] Unable to instantiate launcher: " + launcherName + ". Using default launcher (ssh).");
 			}
 
 			if (localLauncher == null) {
@@ -820,8 +799,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 
 		try {
-			final Enumeration<NetworkInterface> networkInterfaces =
-					NetworkInterface.getNetworkInterfaces();
+			final Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 
 			while (networkInterfaces.hasMoreElements()) {
 				final NetworkInterface ni = networkInterfaces.nextElement();
@@ -877,9 +855,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			final long now = System.nanoTime();
 			if ((now - beforeStart) / 1E9 > this.timeoutStarting) {
 				System.err.println(
-						"[APGAS] "
-								+ ManagementFactory.getRuntimeMXBean().getName()
-								+ " ran into timeout, exit JVM");
+						"[APGAS] " + ManagementFactory.getRuntimeMXBean().getName() + " ran into timeout, exit JVM");
 				System.exit(40);
 			}
 
@@ -891,8 +867,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 
 		if (verboseLauncher) {
-			System.err.println(
-					ManagementFactory.getRuntimeMXBean().getName() + " all hazelcast members are connected");
+			System.err.println(ManagementFactory.getRuntimeMXBean().getName() + " all hazelcast members are connected");
 		}
 	}
 
@@ -907,9 +882,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	public Future<List<Integer>> startMallPlaces(int n) {
 		if (!this.isMaster) {
 			System.err.println(
-					"[APGAS] "
-							+ home
-							+ " called startMallPlaces(), but only the master is allowed to do this");
+					"[APGAS] " + home + " called startMallPlaces(), but only the master is allowed to do this");
 			return null;
 		}
 
@@ -917,26 +890,27 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			GlobalRuntime.readyCounter.addAndGet(n); // useless an dieser Stelle, nur kosmetische Gruende
 			try {
 				ExecutorService executor = Executors.newSingleThreadExecutor();
-				return executor.submit(
-						() -> {
-							// return this.launcher.launch(hostManager, n, verbose, message);
-							return this.launcher.launch(this.hostManager, n, verboseLauncher);
-						});
+				return executor.submit(() -> {
+					// return this.launcher.launch(hostManager, n, verbose, message);
+					return this.launcher.launch(this.hostManager, n, verboseLauncher);
+				});
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
 			}
 		}
 	}
-	
+
 	/**
-	 * Sub routine used to launch the shutdown of the places given as parameter. 
+	 * Sub routine used to launch the shutdown of the places given as parameter.
+	 * 
 	 * @param toBeRemoved list of places to release
 	 * @return the name of the hosts of freed processes in a list
 	 */
 	private List<String> shutdownMallPlaces(final List<Place> toBeRemoved) {
 		if (!this.isMaster) {
-			System.err.println("[APGAS] " + home + " called shutdownMallPlaces(), but only the master is allowed to do this");
+			System.err.println(
+					"[APGAS] " + home + " called shutdownMallPlaces(), but only the master is allowed to do this");
 			return null;
 		}
 		if (verboseLauncher) {
@@ -960,12 +934,12 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 					System.err.println(this.hostManager);
 				}
 
-				// the other remaining places are automatically refreshed by Transport:memberRemoved
+				// the other remaining places are automatically refreshed by
+				// Transport:memberRemoved
 				new ImmediateTask(() -> {
 					// should be wait for finishing all tasks on the host shutting down
 					GlobalRuntimeImpl.getRuntime().shutdown();
-				})
-				.immediateAsyncAt(memberToRemove);
+				}).immediateAsyncAt(memberToRemove);
 			}
 		}
 		return removedHosts;
@@ -983,23 +957,17 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			waitForNewPlacesCount(expectedPlacesCount);
 
 			// wait on all other places
-			GlobalRef<CountDownLatch> globalRef =
-					new GlobalRef<>(new CountDownLatch(places().size() - 1));
+			GlobalRef<CountDownLatch> globalRef = new GlobalRef<>(new CountDownLatch(places().size() - 1));
 			for (final Place p : places()) {
 				if (p.id == here().id) {
 					continue;
 				}
-				immediateAsyncAt(
-						p,
-						() -> {
-							GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
-							GlobalRuntimeImpl.getRuntime()
-							.immediateAsyncAt(
-									globalRef.home(),
-									() -> {
-										globalRef.get().countDown();
-									});
-						});
+				immediateAsyncAt(p, () -> {
+					GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
+					GlobalRuntimeImpl.getRuntime().immediateAsyncAt(globalRef.home(), () -> {
+						globalRef.get().countDown();
+					});
+				});
 			}
 			try {
 				globalRef.get().await();
@@ -1022,9 +990,10 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	/**
-	 * Procedure used to release the places given as parameter.
-	 * This procedure is called by the {@link MalleableCommunicator} after calling the
-	 * pre-hook provided by the programmer
+	 * Procedure used to release the places given as parameter. This procedure is
+	 * called by the {@link MalleableCommunicator} after calling the pre-hook
+	 * provided by the programmer
+	 * 
 	 * @param toBeRemoved list of places to release
 	 * @return the name of the hosts of freed processes in a list
 	 */
@@ -1039,9 +1008,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			// TODO handle failures with a sort of timeout?
 			waitForNewPlacesCount(expectedPlacesCount);
 
-			// Make sure all the other places are also informed of the change in the number of processes
-			GlobalRef<CountDownLatch> globalRef =
-					new GlobalRef<>(new CountDownLatch(expectedPlacesCount - 1));
+			// Make sure all the other places are also informed of the change in the number
+			// of processes
+			GlobalRef<CountDownLatch> globalRef = new GlobalRef<>(new CountDownLatch(expectedPlacesCount - 1));
 			for (final Place p : places()) {
 				if (p.id == here().id) {
 					continue;
@@ -1050,20 +1019,15 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 					continue;
 				}
 				final boolean verbose = verboseLauncher;
-				immediateAsyncAt(
-						p,
-						() -> {
-							if (verbose) {
-								System.err.println(p + " was informed of the reduction in the number of hosts");
-							}
-							GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
-							GlobalRuntimeImpl.getRuntime()
-							.immediateAsyncAt(
-									globalRef.home(),
-									() -> {
-										globalRef.get().countDown();
-									});
-						});
+				immediateAsyncAt(p, () -> {
+					if (verbose) {
+						System.err.println(p + " was informed of the reduction in the number of hosts");
+					}
+					GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
+					GlobalRuntimeImpl.getRuntime().immediateAsyncAt(globalRef.home(), () -> {
+						globalRef.get().countDown();
+					});
+				});
 			}
 			try {
 				globalRef.get().await();
@@ -1081,13 +1045,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				|| (!this.transport.hazelcast.getPartitionService().isClusterSafe())
 				|| (this.transport.getMembers().values().size() != expectedPlacesCount)) {
 			if (verboseLauncher) {
-				System.out.println(
-						"[APGAS] Place("
-								+ here
-								+ "): waiting for malleability, places().size()="
-								+ places().size()
-								+ ", expectedPlacesCount="
-								+ expectedPlacesCount);
+				System.out.println("[APGAS] Place(" + here + "): waiting for malleability, places().size()="
+						+ places().size() + ", expectedPlacesCount=" + expectedPlacesCount);
 			}
 			try {
 				TimeUnit.MILLISECONDS.sleep(500);
@@ -1097,8 +1056,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 	}
 
-	private static boolean isReachable(
-			NetworkInterface nif, String addr, int openPort, int timeOutMillis) {
+	private static boolean isReachable(NetworkInterface nif, String addr, int openPort, int timeOutMillis) {
 		Enumeration<InetAddress> nifAddresses = nif.getInetAddresses();
 		if (!nifAddresses.hasMoreElements()) {
 			return false;
@@ -1124,6 +1082,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
 	/**
 	 * Used to define the handler for malleable programs
+	 * 
 	 * @param handler the handler to use from now on.
 	 */
 	public synchronized void setMalleableHandler(MalleableHandler handler) {
@@ -1131,12 +1090,14 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			System.err.println("Setting malleable handler " + handler.getClass().getCanonicalName());
 		}
 		if (here != 0) {
-			throw new RuntimeException("Attempted to set the malleable handler on place(" + here + 
-					"). The malleable handler should only be set on place(0)");
+			throw new RuntimeException("Attempted to set the malleable handler on place(" + here
+					+ "). The malleable handler should only be set on place(0)");
 		}
 		if (malleableCommunicator == null) {
-			// Either initialization failed or you forgot to set and this program "malleable". 
-			// Either way this program is effectively fixed, making defining the malleable handler redundant"
+			// Either initialization failed or you forgot to set and this program
+			// "malleable".
+			// Either way this program is effectively fixed, making defining the malleable
+			// handler redundant"
 			throw new RuntimeException("The malleable communicator was not instanciated");
 		}
 		if (malleableHandler == null) {

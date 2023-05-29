@@ -37,7 +37,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** The {@link Transport} class manages the Hazelcast cluster and implements active messages. */
+/**
+ * The {@link Transport} class manages the Hazelcast cluster and implements
+ * active messages.
+ */
 public class Transport implements InitialMembershipListener {
 
 	private static final String APGAS = "apgas";
@@ -67,18 +70,13 @@ public class Transport implements InitialMembershipListener {
 	/**
 	 * Initializes the {@link HazelcastInstance} for this global runtime instance.
 	 *
-	 * @param runtime the global runtime instance
-	 * @param master member to connect to or null
-	 * @param localhost the preferred ip address of this host or null
+	 * @param runtime     the global runtime instance
+	 * @param master      member to connect to or null
+	 * @param localhost   the preferred ip address of this host or null
 	 * @param backupCount number of backups to use for distributed data structures
 	 */
-	protected Transport(
-			GlobalRuntimeImpl runtime,
-			String master,
-			String localhost,
-			String launcherName,
-			int backupCount,
-			int placeId) {
+	protected Transport(GlobalRuntimeImpl runtime, String master, String localhost, String launcherName,
+			int backupCount, int placeId) {
 		this.runtime = runtime;
 		// config
 		config = new Config();
@@ -88,8 +86,7 @@ public class Transport implements InitialMembershipListener {
 		config.setProperty("hazelcast.wait.seconds.before.join", "0");
 		config.setProperty("hazelcast.socket.connect.timeout.seconds", "1");
 
-		config.setProperty(
-				"hazelcast.partition.count", String.valueOf(Configuration.APGAS_PLACES.get()));
+		config.setProperty("hazelcast.partition.count", String.valueOf(Configuration.APGAS_PLACES.get()));
 
 		NetworkConfig networkConfig = config.getNetworkConfig();
 
@@ -100,9 +97,7 @@ public class Transport implements InitialMembershipListener {
 		}
 
 		config.addMapConfig(
-				new MapConfig(APGAS_FINISH)
-				.setInMemoryFormat(InMemoryFormat.OBJECT)
-				.setBackupCount(backupCount));
+				new MapConfig(APGAS_FINISH).setInMemoryFormat(InMemoryFormat.OBJECT).setBackupCount(backupCount));
 
 		// join config
 		final JoinConfig join = config.getNetworkConfig().getJoin();
@@ -126,9 +121,7 @@ public class Transport implements InitialMembershipListener {
 			executor = hazelcast.getExecutorService(APGAS_EXECUTOR);
 		} catch (Throwable t) {
 			System.err.println(
-					"[APGAS] startHazelcast: "
-							+ ManagementFactory.getRuntimeMXBean().getName()
-							+ " throws Exception");
+					"[APGAS] startHazelcast: " + ManagementFactory.getRuntimeMXBean().getName() + " throws Exception");
 			t.printStackTrace();
 		}
 		return true;
@@ -136,15 +129,15 @@ public class Transport implements InitialMembershipListener {
 
 	/** Starts monitoring cluster membership events. */
 	protected synchronized void start() {
-		//        regItemListener = allMembers.addItemListener(this, false);
+		// regItemListener = allMembers.addItemListener(this, false);
 		regMembershipListener = hazelcast.getCluster().addMembershipListener(this);
 	}
 
 	/**
 	 * Returns the distributed map instance with the given name.
 	 *
-	 * @param <K> key type
-	 * @param <V> value type
+	 * @param <K>  key type
+	 * @param <V>  value type
 	 * @param name map name
 	 * @return the map
 	 */
@@ -201,7 +194,7 @@ public class Transport implements InitialMembershipListener {
 	 * Executes a function at the given place.
 	 *
 	 * @param place the requested place of execution
-	 * @param f the function to execute
+	 * @param f     the function to execute
 	 * @throws DeadPlaceException if the cluster does not contain this place
 	 */
 	protected void send(int place, SerializableRunnable f) {
@@ -221,7 +214,7 @@ public class Transport implements InitialMembershipListener {
 	 * Executes a function at the given member.
 	 *
 	 * @param member the requested place of execution
-	 * @param f the function to execute
+	 * @param f      the function to execute
 	 * @throws DeadPlaceException if the cluster does not contain this place
 	 */
 	protected void send(Member member, SerializableRunnable f) {

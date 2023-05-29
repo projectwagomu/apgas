@@ -36,7 +36,7 @@ public class ResilientPlaceGroup implements Serializable {
 		try {
 			for (int id = 0; id < array.length; ++id) {
 				if (!places.contains(array[id])) {
-					for (; ; ) {
+					for (;;) {
 						spare = it.next();
 						if (spare.id > max) {
 							break;

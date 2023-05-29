@@ -17,27 +17,27 @@ import java.util.List;
 /** The {@link SrunLauncher} class implements a launcher using srun. */
 public class SrunLauncher extends RemoteLauncher {
 
-  @Override
-  void startRemote(List<String> command, boolean verbose, String hostAddress) {
-    command.add(0, "srun");
-    command.add(1, "--mem=180G");
-    command.add(2, "-N 1");
-    command.add(3, "-n 1");
-    command.add(4, "-w");
-    command.add(5, hostAddress);
-    if (verbose) {
-      System.err.println("[APGAS] Spawning new place: " + String.join(" ", command));
-    }
-    try {
-      super.process = super.processBuilder.start();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    command.remove(0);
-    command.remove(0);
-    command.remove(0);
-    command.remove(0);
-    command.remove(0);
-    command.remove(0);
-  }
+	@Override
+	void startRemote(List<String> command, boolean verbose, String hostAddress) {
+		command.add(0, "srun");
+		command.add(1, "--mem=180G");
+		command.add(2, "-N 1");
+		command.add(3, "-n 1");
+		command.add(4, "-w");
+		command.add(5, hostAddress);
+		if (verbose) {
+			System.err.println("[APGAS] Spawning new place: " + String.join(" ", command));
+		}
+		try {
+			super.process = super.processBuilder.start();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		command.remove(0);
+		command.remove(0);
+		command.remove(0);
+		command.remove(0);
+		command.remove(0);
+		command.remove(0);
+	}
 }

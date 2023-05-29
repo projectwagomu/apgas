@@ -14,19 +14,21 @@ package apgas;
 import java.util.Collection;
 
 /**
- * A {@link DeadPlacesException} is a {@link MultipleException} caused only by dead place
- * exceptions.
+ * A {@link DeadPlacesException} is a {@link MultipleException} caused only by
+ * dead place exceptions.
  */
 public class DeadPlacesException extends MultipleException {
 
-  private static final long serialVersionUID = 1904057943221698941L;
+	private static final long serialVersionUID = 1904057943221698941L;
 
-  /**
-   * Constructs a new {@link DeadPlacesException} from the specified {@code exceptions}.
-   *
-   * @param exceptions the uncaught exceptions that contributed to this {@code MultipleException}
-   */
-  DeadPlacesException(Collection<Throwable> exceptions) {
-    super(exceptions);
-  }
+	/**
+	 * Constructs a new {@link DeadPlacesException} from the specified
+	 * {@code exceptions}.
+	 *
+	 * @param exceptions the uncaught exceptions that contributed to this
+	 *                   {@code MultipleException}
+	 */
+	DeadPlacesException(Collection<Throwable> exceptions) {
+		super(exceptions);
+	}
 }

@@ -14,13 +14,14 @@ package apgas.util;
 import apgas.Place;
 
 /**
- * A {@link BadPlaceException} is thrown by a {@link GlobalRef} instance when accessed from {@link
- * Place} where it is not defined.
+ * A {@link BadPlaceException} is thrown by a {@link GlobalRef} instance when
+ * accessed from {@link Place} where it is not defined.
  */
 public class BadPlaceException extends RuntimeException {
 
-  private static final long serialVersionUID = 8639251079580877933L;
+	private static final long serialVersionUID = 8639251079580877933L;
 
-  /** Constructs a new {@link BadPlaceException}. */
-  public BadPlaceException() {}
+	/** Constructs a new {@link BadPlaceException}. */
+	public BadPlaceException() {
+	}
 }

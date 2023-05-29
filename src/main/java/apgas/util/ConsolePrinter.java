@@ -40,8 +40,7 @@ public class ConsolePrinter implements Serializable {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			System.out.println(
-					here() + "@" + host + " [" + time + "] (in " + callerName + ") : " + output);
+			System.out.println(here() + "@" + host + " [" + time + "] (in " + callerName + ") : " + output);
 		}
 	}
 
@@ -73,16 +72,8 @@ public class ConsolePrinter implements Serializable {
 		if (PRINT == true) {
 			String callerName = Thread.currentThread().getStackTrace()[2].getMethodName();
 			String time = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME);
-			System.out.println(
-					place(source)
-					+ " (in "
-							+ callerName
-							+ " at "
-							+ here().id
-							+ ") ["
-							+ time
-							+ "]: "
-							+ output);
+			System.out
+					.println(place(source) + " (in " + callerName + " at " + here().id + ") [" + time + "]: " + output);
 		}
 	}
 
@@ -90,16 +81,8 @@ public class ConsolePrinter implements Serializable {
 		if (PRINT == true) {
 			String callerName = Thread.currentThread().getStackTrace()[2].getMethodName();
 			String time = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME);
-			System.err.println(
-					place(source)
-					+ " (in "
-							+ callerName
-							+ " at "
-							+ here().id
-							+ ") ["
-							+ time
-							+ "]: "
-							+ output);
+			System.err
+					.println(place(source) + " (in " + callerName + " at " + here().id + ") [" + time + "]: " + output);
 		}
 	}
 

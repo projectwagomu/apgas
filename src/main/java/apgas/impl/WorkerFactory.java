@@ -14,13 +14,16 @@ package apgas.impl;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
 
-/** The {@link WorkerFactory} class implements a thread factory for the thread pool. */
+/**
+ * The {@link WorkerFactory} class implements a thread factory for the thread
+ * pool.
+ */
 final class WorkerFactory implements ForkJoinPool.ForkJoinWorkerThreadFactory {
 
-  private int counter = 0;
+	private int counter = 0;
 
-  @Override
-  public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
-    return new Worker(pool, counter++);
-  }
+	@Override
+	public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+		return new Worker(pool, counter++);
+	}
 }

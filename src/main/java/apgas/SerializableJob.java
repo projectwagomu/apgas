@@ -16,11 +16,12 @@ import java.io.Serializable;
 /**
  * A serializable functional interface with no arguments and no return value.
  *
- * <p>The functional method is {@link #run()}.
+ * <p>
+ * The functional method is {@link #run()}.
  */
 @FunctionalInterface
 public interface SerializableJob extends Serializable, Job {
 
-  @Override
-  void run() throws Exception;
+	@Override
+	void run() throws Exception;
 }

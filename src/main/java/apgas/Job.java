@@ -14,15 +14,16 @@ package apgas;
 /**
  * A functional interface with no arguments and no return value.
  *
- * <p>The functional method is {@link #run()}.
+ * <p>
+ * The functional method is {@link #run()}.
  */
 @FunctionalInterface
 public interface Job {
 
-  /**
-   * Runs the function or throws an exception if unable to do so.
-   *
-   * @throws Exception if unable to run the function
-   */
-  void run() throws Exception;
+	/**
+	 * Runs the function or throws an exception if unable to do so.
+	 *
+	 * @throws Exception if unable to run the function
+	 */
+	void run() throws Exception;
 }

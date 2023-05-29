@@ -18,23 +18,21 @@ import java.util.List;
 /** The {@link NoLauncher} class does not spawn any place. */
 public class NoLauncher implements Launcher {
 
-  @Override
-  public List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception {
-    if (verbose) {
-      System.err.println(
-          "[APGAS] Ignoring attempt to spawn "
-              + n
-              + " new place(s), command: "
-              + String.join(" ", hostManager.getCopyOfLaunchCommand()));
-    }
-    return Collections.emptyList();
-  }
+	@Override
+	public List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception {
+		if (verbose) {
+			System.err.println("[APGAS] Ignoring attempt to spawn " + n + " new place(s), command: "
+					+ String.join(" ", hostManager.getCopyOfLaunchCommand()));
+		}
+		return Collections.emptyList();
+	}
 
-  @Override
-  public void shutdown() {}
+	@Override
+	public void shutdown() {
+	}
 
-  @Override
-  public boolean healthy() {
-    return true;
-  }
+	@Override
+	public boolean healthy() {
+		return true;
+	}
 }

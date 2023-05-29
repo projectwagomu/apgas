@@ -18,13 +18,16 @@ import java.io.ObjectInputStream;
 /**
  * The {@link ImmediateTask} class represents an immediate task.
  *
- * <p>This class implements task serialization and handles errors in the serialization process.
+ * <p>
+ * This class implements task serialization and handles errors in the
+ * serialization process.
  */
 final class ImmediateTask implements SerializableRunnable {
 
 	private static final long serialVersionUID = -7419887249105833691L;
-	
-	private static final SerializableRunnable NULL = () -> {};
+
+	private static final SerializableRunnable NULL = () -> {
+	};
 	/** The function to run. */
 	private SerializableRunnable f;
 
@@ -46,8 +49,9 @@ final class ImmediateTask implements SerializableRunnable {
 	/**
 	 * Submits the task for asynchronous uncounted execution at place p.
 	 *
-	 * <p>If serialization fails, the task is dropped. The exception is logged to System.err and
-	 * masked unless APGAS_SERIALIZATION_EXCEPTION is set to "true".
+	 * <p>
+	 * If serialization fails, the task is dropped. The exception is logged to
+	 * System.err and masked unless APGAS_SERIALIZATION_EXCEPTION is set to "true".
 	 *
 	 * @param p the place ID
 	 */
@@ -62,8 +66,9 @@ final class ImmediateTask implements SerializableRunnable {
 	/**
 	 * Submits the task for asynchronous uncounted execution at place p.
 	 *
-	 * <p>If serialization fails, the task is dropped. The exception is logged to System.err and
-	 * masked unless APGAS_SERIALIZATION_EXCEPTION is set to "true".
+	 * <p>
+	 * If serialization fails, the task is dropped. The exception is logged to
+	 * System.err and masked unless APGAS_SERIALIZATION_EXCEPTION is set to "true".
 	 *
 	 * @param member the hazelcast member
 	 */
@@ -78,21 +83,21 @@ final class ImmediateTask implements SerializableRunnable {
 	/**
 	 * Deserializes the task.
 	 *
-	 * <p>If deserialization fails, the task is dropped. The exception is logged to System.err.
+	 * <p>
+	 * If deserialization fails, the task is dropped. The exception is logged to
+	 * System.err.
 	 *
 	 * @param in the object input stream
-	 * @throws IOException if I/O errors occur
-	 * @throws ClassNotFoundException if the class of the serialized object cannot be found
+	 * @throws IOException            if I/O errors occur
+	 * @throws ClassNotFoundException if the class of the serialized object cannot
+	 *                                be found
 	 */
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		try {
 			f = (SerializableRunnable) in.readObject();
 		} catch (final Throwable e) {
-			System.err.println(
-					"[APGAS] Ignoring failure to receive an uncounted task at place "
-							+ GlobalRuntimeImpl.getRuntime().here
-							+ " due to: "
-							+ e);
+			System.err.println("[APGAS] Ignoring failure to receive an uncounted task at place "
+					+ GlobalRuntimeImpl.getRuntime().here + " due to: " + e);
 			f = NULL;
 		}
 	}

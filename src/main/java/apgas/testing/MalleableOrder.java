@@ -8,8 +8,10 @@ import java.net.Socket;
 import apgas.impl.elastic.SocketMalleableCommunicator;
 
 /**
- * Simple main used to send malleable shrink/expand orders to a running malleable APGAS program
- * using the {@link SocketMalleableCommunicator} as the communicator
+ * Simple main used to send malleable shrink/expand orders to a running
+ * malleable APGAS program using the {@link SocketMalleableCommunicator} as the
+ * communicator
+ * 
  * @author Kanzaki
  *
  */
@@ -22,20 +24,20 @@ public class MalleableOrder {
 	public static final String DEFAULT_PORT = "8081";
 
 	/**
-	 * This main takes different arguments depending on the on the type of order to sent to the running malleable program.
+	 * This main takes different arguments depending on the on the type of order to
+	 * sent to the running malleable program.
 	 * <p>
-	 * <h1>shrink case</h1>
-	 * The arguments expected are:
+	 * <h1>shrink case</h1> The arguments expected are:
 	 * <ul>
 	 * <li>shrink
 	 * <li>number of host to release
 	 * </ul>
 	 * <p>
-	 * This program then expects to receive the released hosts from the running program, one host per line.
-	 * These hostnames are printed on the standard output of this program.
+	 * This program then expects to receive the released hosts from the running
+	 * program, one host per line. These hostnames are printed on the standard
+	 * output of this program.
 	 * <p>
-	 * <h1>grow case</h1>
-	 * The arguments expected are:
+	 * <h1>grow case</h1> The arguments expected are:
 	 * <ul>
 	 * <li>grow
 	 * <li>number of hosts to grow by
