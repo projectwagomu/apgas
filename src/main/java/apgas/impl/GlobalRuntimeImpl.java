@@ -44,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
@@ -249,6 +248,10 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		return t instanceof Worker ? (Worker) t : null;
 	}
 
+	/**
+	 * Obtain the current runtime implementation
+	 * @return {@link GlobalRuntimeImpl} object of the current runtime
+	 */
 	public static GlobalRuntimeImpl getRuntime() {
 		while (runtime.ready != true) { // Wait for constructor
 			try {
@@ -707,10 +710,10 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		return prev;
 	}
 
-	public Map<Integer, Member> getMembers() {
-		return transport.getMembers();
-	}
-
+	/**
+	 * Returns the Worker running the current task
+	 * @return Worker object of the current task
+	 */
 	public Worker getCurrentWorker() {
 		return (Worker) Thread.currentThread();
 	}
@@ -868,15 +871,12 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 	}
 
-	/*
-	 * TODO delete this method?
-	 * 
-	 * This is now unused as with the generic malleable implementation, only the
-	 * blocking version is now used.
-	 * 
-	 * In the meantime this method was turned private.
+	/**
+	 * Asynchronously start new places
+	 * @param n number of places to spawn
+	 * @return a future returning a list of integers containing the place ids of the new places
 	 */
-	public Future<List<Integer>> startMallPlaces(int n) {
+	private Future<List<Integer>> startMallPlaces(int n) {
 		if (!this.isMaster) {
 			System.err.println(
 					"[APGAS] " + home + " called startMallPlaces(), but only the master is allowed to do this");
@@ -942,6 +942,12 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		return removedHosts;
 	}
 
+	/**
+	 * Method called to add places to the program currently in execution
+	 * @param n number of new places to spawn 
+	 * @param hosts hosts on which to spawn these new places
+	 * @return list of integers containing the ids of the newly spawned places
+	 */
 	public List<Integer> startMallPlacesBlocking(int n, List<String> hosts) {
 		for (String host : hosts) {
 			hostManager.addHost(host);
