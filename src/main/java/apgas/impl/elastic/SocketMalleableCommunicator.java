@@ -11,24 +11,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import apgas.Configuration;
+
+/**
+ * Default implementation of {@link MalleableCommunicator} based on a Socket.
+ * @author Patrick Finnerty
+ *
+ */
 public class SocketMalleableCommunicator extends MalleableCommunicator {
 
+	/** Setting to set the IP from which connections may be accepted to receive malleable orders */
 	public static final String SCHEDULER_IP = "malleable_scheduler_ip";
+	/** Setting to set the port on which connections may be accepted to receive malleable orders */
 	public static final String SCHEDULER_Port = "malleable_scheduler_port";
 
-	private PrintWriter writer = null;
-	private BufferedReader reader = null;
 	/** Socket used to receive orders from the scheduler */
 	private ServerSocket server = null;
+	/** Socket of an ongoing connection<p>This socket is kept as a member for cases where as malleable "shrink" order is received and the hosts that were released need to be sent to the scheduler. */
 	private Socket socket = null;
 
+	/** Value of property {@link #SCHEDULER_IP} for this execution */
 	private String schedulerIP;
+	/** Value of property {@link #SCHEDULER_Port} for this execution */
 	private int schedulerPort;
 
+	/** Thread in charge of (blockingly) waiting for incoming connections */
 	private Thread listenerThread = null;
 
+	/** Boolean flag used when shutting down the {@link #listenerThread} upon the program terminating */
 	private volatile boolean listening = true;
 
+	/** Flag used to set verbose mode. Is initialized based on the value set for property {@link Configuration#APGAS_VERBOSE_LAUNCHER} */
+	private boolean verbose;
+
+	/**
+	 * Constructor
+	 * <p>
+	 * The SocketMalleableCommunicator users the properties {@link #SCHEDULER_IP} and {@link #SCHEDULER_Port} to initialize its socket.
+	 * This constructor is called using reflection as part of a malleable APGAS execution.  
+	 * @throws Exception if thrown during the socket setup.
+	 */
 	public SocketMalleableCommunicator() throws Exception {
 		// Obtain the IP/Port of the scheduler to establish a connection
 		Properties props = System.getProperties();
@@ -40,19 +62,23 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 
 		server = new ServerSocket();
 		server.bind(new InetSocketAddress(schedulerIP, schedulerPort));
+
+		verbose = Configuration.APGAS_VERBOSE_LAUNCHER.get();
 	}
 
 	/**
 	 * Procedure which blocks on the socket to receive orders from the scheduler.
-	 * When a message is received, the thread running this procedure 
+	 * When a message is received, the thread running this procedure will call the appropriate superclass methods to trigger the change in the program runtime.
 	 */
 	private void listenToSocket() {
 		while (listening) {
 			try {
 				socket = server.accept();
-				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				String line = reader.readLine();
-				System.out.println("SocketMalleableCommunicator received: " + line);
+				if (verbose) {
+					System.out.println("SocketMalleableCommunicator received: " + line);
+				}
 
 				// Interpret received order and call the appropriate procedure
 				String str[] = line.split(" ");
@@ -79,11 +105,13 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 	}
 
 	/**
-	 * For class {@link SocketMalleableCommunicator}, starting means forking a thread to listen to incoming requests from the scheduler. 
+	 * For class {@link SocketMalleableCommunicator}, starting means forking a thread to listen to incoming requests from the scheduler.
 	 */
 	@Override
 	public void start() throws Exception {
-		System.err.println("SocketMalleableCommunicator start() method called, opening socket to listen to " + schedulerIP + ":" + schedulerPort);
+		if (verbose) {
+			System.err.println("SocketMalleableCommunicator start() method called, opening socket to listen to " + schedulerIP + ":" + schedulerPort);
+		}
 		// We now fork a thread to listen to the socket and call the relevant method when 
 		// an order from the scheduler is received.
 		listenerThread = new Thread(()->listenToSocket());
@@ -95,11 +123,13 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 	 */
 	@Override
 	public void stop() {
-		System.err.println(SocketMalleableCommunicator.class.getName() + " stop() method called, closing socket and cleaning up.");
+		if (verbose) {
+			System.err.println(SocketMalleableCommunicator.class.getName() + " stop() method called, closing socket and cleaning up.");
+		}
 
 		// Interrupt and release the thread listening on the socket
 		listening = false;
-		
+
 		// If the start method was not called, listenerThread may be null
 		if (listenerThread != null) {
 			listenerThread.interrupt();
@@ -108,11 +138,13 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 
 	@Override
 	protected void hostReleased(List<String> hosts) {
-		for (String s : hosts) {
-			System.err.println("Released host: " + s);
+		if (verbose) {
+			for (String s : hosts) {
+				System.err.println("Released host: " + s);
+			}
 		}
 		try {
-			this.writer = new PrintWriter(socket.getOutputStream(), true);
+			PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
 			for (String hostName : hosts) {
 				writer.println(hostName);
 			}

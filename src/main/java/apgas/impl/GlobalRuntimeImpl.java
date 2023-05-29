@@ -195,7 +195,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		this.home = new Place(this.here);
 		this.resilientFinishMap = this.resilient ? this.transport.getResilientFinishMap() : null;
 
-		if (true == this.verboseLauncher) {
+		if (verboseLauncher) {
 			System.err.println("[APGAS] New place was started at " + this.transport.getAddress());
 		}
 
@@ -234,9 +234,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		this.ready = true;
 		reduceReadyCounter();
 
-		if (this.here == 0) {
+		if (this.here == 0 && verboseLauncher) {
 			System.out.println(
-					"[APGAS] Starting Places time: " + ((System.nanoTime() - begin) / 1E9) + " sec");
+					"[APGAS] Place startup time: " + ((System.nanoTime() - begin) / 1E9) + " sec");
 		}
 	}
 
@@ -329,7 +329,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			}
 		}
 
-		if (true == this.verboseLauncher) {
+		if (verboseLauncher) {
 			System.err.println(
 					"[APGAS] "
 							+ ManagementFactory.getRuntimeMXBean().getName()
@@ -468,7 +468,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		transport.shutdown();
 
 		// Exit
-		System.err.println("place(" + here + ") is shutting down.");
+		if (verboseLauncher) {
+			System.err.println("place(" + here + ") is shutting down.");
+		}
 		System.exit(0);
 	}
 
@@ -827,7 +829,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				try {
 					// if (!InetAddress.getByName(master.split(":")[0]).isReachable(ni, 0, 100)) {
 					if (isReachable(ni, master.split(":")[0], 5701, 100)) {
-						if (true == this.verboseLauncher) {
+						if (verboseLauncher) {
 							System.err.println(
 									"[APGAS] host " + master + " is not reachable with networkinterface " + ni);
 						}
@@ -835,13 +837,14 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 					}
 
 				} catch (Throwable t) {
-					if (true == verboseLauncher) {
+					if (verboseLauncher) {
 						System.err.println("[APGAS] unexpected error in finding host");
 					}
 					t.printStackTrace();
 				}
-
-				System.err.println("[APGAS] host " + master + " is reachable with network interface " + ni);
+				if (verboseLauncher) {
+					System.err.println("[APGAS] host " + master + " is reachable with network interface " + ni);
+				}
 				final Enumeration<InetAddress> e = ni.getInetAddresses();
 				while (e.hasMoreElements()) {
 					final InetAddress inetAddress = e.nextElement();
@@ -887,7 +890,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			}
 		}
 
-		if (true == verboseLauncher) {
+		if (verboseLauncher) {
 			System.err.println(
 					ManagementFactory.getRuntimeMXBean().getName() + " all hazelcast members are connected");
 		}
@@ -1046,11 +1049,13 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				if (toRelease.contains(p)) {
 					continue;
 				}
-
+				final boolean verbose = verboseLauncher;
 				immediateAsyncAt(
 						p,
 						() -> {
-							System.err.println(p + " was informed of the reduction in the number of hosts");
+							if (verbose) {
+								System.err.println(p + " was informed of the reduction in the number of hosts");
+							}
 							GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
 							GlobalRuntimeImpl.getRuntime()
 							.immediateAsyncAt(
@@ -1123,7 +1128,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	 */
 	public synchronized void setMalleableHandler(MalleableHandler handler) {
 		if (verboseLauncher) {
-			System.err.println("Setting malleable handler" + handler.getClass().getCanonicalName());
+			System.err.println("Setting malleable handler " + handler.getClass().getCanonicalName());
 		}
 		if (here != 0) {
 			throw new RuntimeException("Attempted to set the malleable handler on place(" + here + 

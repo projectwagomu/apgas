@@ -121,7 +121,6 @@ public class Transport implements InitialMembershipListener {
 	public boolean startHazelcast() {
 		try {
 			hazelcast = Hazelcast.newHazelcastInstance(config);
-			System.err.println("hazelcast started");
 			me = hazelcast.getCluster().getLocalMember();
 
 			executor = hazelcast.getExecutorService(APGAS_EXECUTOR);
