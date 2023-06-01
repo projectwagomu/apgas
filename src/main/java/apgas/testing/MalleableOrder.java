@@ -1,8 +1,8 @@
 package apgas.testing;
 
-import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 import apgas.impl.elastic.SocketMalleableCommunicator;
@@ -11,17 +11,17 @@ import apgas.impl.elastic.SocketMalleableCommunicator;
  * Simple main used to send malleable shrink/expand orders to a running
  * malleable APGAS program using the {@link SocketMalleableCommunicator} as the
  * communicator
- * 
+ *
  * @author Kanzaki
  *
  */
 public class MalleableOrder {
 
-	private static final String JOB_IP = "job.ip";
-	private static final String JOB_PORT = "job.port";
-
 	private static final String DEFAULT_IP = "127.0.0.1";
 	private static final String DEFAULT_PORT = "8081";
+
+	private static final String JOB_IP = "job.ip";
+	private static final String JOB_PORT = "job.port";
 
 	/**
 	 * This main takes different arguments depending on the on the type of order to
@@ -41,7 +41,7 @@ public class MalleableOrder {
 	 * <li>number of hosts to grow by
 	 * <li>the hosts on which to spawn a new process
 	 * </ul>
-	 * 
+	 *
 	 * @param args program arguments
 	 */
 	public static void main(String[] args) {
@@ -57,8 +57,8 @@ public class MalleableOrder {
 			writer = new PrintWriter(socket.getOutputStream(), true);
 			// Send the order as it was received by this program
 			String str = new String();
-			for (int i = 0; i < args.length; i++) {
-				str += (args[i] + " ");
+			for (final String arg : args) {
+				str += (arg + " ");
 			}
 			writer.println(str);
 
@@ -67,18 +67,18 @@ public class MalleableOrder {
 				BufferedReader reader;
 				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				for (int i = 0; i < Integer.parseInt(args[1]); i++) {
-					String line = reader.readLine();
+					final String line = reader.readLine();
 					System.out.println("[MalleableOrder] The hosts freed were: " + line);
 				}
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		} finally {
 			try {
 				if (socket != null) {
 					socket.close();
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				e.printStackTrace();
 			}
 		}

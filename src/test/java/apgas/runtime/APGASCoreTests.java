@@ -8,72 +8,64 @@ import static apgas.Constructs.places;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import apgas.Configuration;
-import apgas.Constructs;
-import apgas.GlobalRuntime;
-import apgas.Place;
-import apgas.util.GlobalRef;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import apgas.Configuration;
+import apgas.Constructs;
+import apgas.GlobalRuntime;
+import apgas.Place;
+import apgas.util.GlobalRef;
+
 public class APGASCoreTests {
-
-	@BeforeAll
-	static void beforeAll() {
-		Configuration.APGAS_THREADS.setDefaultValue(5);
-		Configuration.APGAS_PLACES.setDefaultValue(6);
-		Configuration.APGAS_RESILIENT.set(true);
-
-		GlobalRuntime.getRuntime();
-	}
 
 	@AfterAll
 	static void afterAll() {
 	}
 
-	@Test
-	@DisplayName("Testing Finish with single async.")
-	void shouldWaitForSingleAsyncTaskToFinish() {
-		AtomicInteger testCounter = new AtomicInteger(0);
-		finish(() -> async(() -> {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			testCounter.set(1);
-		}));
-		assertEquals(1, testCounter.get(), "The Counter should be set to 1 by the async Task.");
+	@BeforeAll
+	static void beforeAll() {
+		Configuration.CONFIG_APGAS_THREADS.setDefaultValue(5);
+		Configuration.CONFIG_APGAS_PLACES.setDefaultValue(6);
+		Configuration.CONFIG_APGAS_RESILIENT.set(true);
+
+		GlobalRuntime.getRuntime();
 	}
 
 	@Test
-	@DisplayName("Testing nested Finish no Activity.")
-	void shouldWaitCorrectlyWithNestedFinish() {
-		finish(() -> finish(() -> {
+	@DisplayName("Testing Finish with nested async and asyncAt")
+	void shouldScheduleAsyncAtLocally() {
+		final AtomicInteger testCounter = new AtomicInteger(0);
+		finish(() -> asyncAt(here(), () -> {
+			async(testCounter::incrementAndGet);
 			try {
 				Thread.sleep(100);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				e.printStackTrace();
 			}
+			testCounter.incrementAndGet();
+			async(testCounter::incrementAndGet);
 		}));
+		assertEquals(3, testCounter.get(), "testCounter should be incremented 3 time by asyncs(At).");
 	}
 
 	@Test
 	@DisplayName("Testing nested Finish with asyncAt.")
 	void shouldWaitCorrectlyForAsyncAtInsideNestedFinish() {
 
-		List<Place> testPlaces = new ArrayList<>(places());
+		final List<Place> testPlaces = new ArrayList<>(places());
 		testPlaces.remove(Constructs.here());
-		Place testPlace = testPlaces.get(0);
+		final Place testPlace = testPlaces.get(0);
 		finish(() -> finish(() -> asyncAt(testPlace, () -> {
 			try {
 				Thread.sleep(100);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				e.printStackTrace();
 			}
 		})));
@@ -82,21 +74,21 @@ public class APGASCoreTests {
 	@Test
 	@DisplayName("Testing nested Finish with two asyncAt.")
 	void shouldWaitCorrectlyForBothAsyncAt() {
-		ArrayList<Place> testPlaces = new ArrayList<>(places());
+		final ArrayList<Place> testPlaces = new ArrayList<>(places());
 		testPlaces.remove(here());
-		Place testPlace = testPlaces.get(0);
+		final Place testPlace = testPlaces.get(0);
 		finish(() -> {
 			asyncAt(testPlace, () -> {
 				try {
 					Thread.sleep(250);
-				} catch (InterruptedException e) {
+				} catch (final InterruptedException e) {
 					e.printStackTrace();
 				}
 			});
 			finish(() -> asyncAt(testPlace, () -> {
 				try {
 					Thread.sleep(100);
-				} catch (InterruptedException e) {
+				} catch (final InterruptedException e) {
 					e.printStackTrace();
 				}
 			}));
@@ -104,17 +96,29 @@ public class APGASCoreTests {
 	}
 
 	@Test
+	@DisplayName("Testing nested Finish no Activity.")
+	void shouldWaitCorrectlyWithNestedFinish() {
+		finish(() -> finish(() -> {
+			try {
+				Thread.sleep(100);
+			} catch (final InterruptedException e) {
+				e.printStackTrace();
+			}
+		}));
+	}
+
+	@Test
 	@DisplayName("Testing Finish with asyncAt and its back")
 	void shouldWaitForAsyncAtAndBack() {
-		AtomicInteger testCounter = new AtomicInteger(0);
-		GlobalRef<AtomicInteger> globalTestCounter = new GlobalRef<>(testCounter);
-		ArrayList<Place> testPlaces = new ArrayList<>(places());
+		final AtomicInteger testCounter = new AtomicInteger(0);
+		final GlobalRef<AtomicInteger> globalTestCounter = new GlobalRef<>(testCounter);
+		final ArrayList<Place> testPlaces = new ArrayList<>(places());
 		testPlaces.remove(here());
 		assertFalse(testPlaces.isEmpty(), "There should be started at least one more Place.");
 		finish(() -> asyncAt(testPlaces.get(0), () -> {
 			try {
 				Thread.sleep(100);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				e.printStackTrace();
 			}
 			asyncAt(globalTestCounter.home(), () -> {
@@ -126,87 +130,23 @@ public class APGASCoreTests {
 	}
 
 	@Test
-	@DisplayName("Testing Finish with nested asyncs")
-	void shouldWaitForTransitiveSpawnedAsyncTasks() {
-		AtomicInteger testCounter = new AtomicInteger(0);
-		finish(() -> async(() -> {
-			async(testCounter::incrementAndGet);
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			testCounter.incrementAndGet();
-			async(testCounter::incrementAndGet);
-		}));
-		assertEquals(3, testCounter.get(), "testCounter should be incremented 3 time by asyncs.");
-	}
-
-	@Test
-	@DisplayName("Testing Finish with nested async and asyncAt")
-	void shouldScheduleAsyncAtLocally() {
-		AtomicInteger testCounter = new AtomicInteger(0);
-		finish(() -> asyncAt(here(), () -> {
-			async(testCounter::incrementAndGet);
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			testCounter.incrementAndGet();
-			async(testCounter::incrementAndGet);
-		}));
-		assertEquals(3, testCounter.get(), "testCounter should be incremented 3 time by asyncs(At).");
-	}
-
-	@Test
-	@DisplayName("Testing Finish with nested asyncAts")
-	void shouldWaitForNestedAsyncAt() {
-		AtomicInteger testCounter = new AtomicInteger(0);
-		GlobalRef<AtomicInteger> globalTestCounter = new GlobalRef<>(testCounter);
-		ArrayList<Place> testPlaces = new ArrayList<>(places());
-		testPlaces.remove(here());
-		assertFalse(testPlaces.isEmpty(), "There should be started at least one more Place.");
-		finish(() -> asyncAt(testPlaces.get(0), () -> {
-			asyncAt(globalTestCounter.home(), () -> {
-				async(() -> globalTestCounter.get().incrementAndGet());
-				async(() -> globalTestCounter.get().incrementAndGet());
-				async(() -> globalTestCounter.get().incrementAndGet());
-			});
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			asyncAt(globalTestCounter.home(), () -> {
-				globalTestCounter.get().incrementAndGet();
-			});
-
-			asyncAt(globalTestCounter.home(), () -> {
-				globalTestCounter.get().incrementAndGet();
-			});
-		}));
-		assertEquals(5, testCounter.get(), "The Counter should be set to 5 by the async Task.");
-	}
-
-	@Test
 	@DisplayName("Testing nested Finish")
 	void shouldWaitForCorrectFinish() {
-		AtomicInteger testCounter = new AtomicInteger(0);
-		GlobalRef<AtomicInteger> globalTestCounter = new GlobalRef<>(testCounter);
-		ArrayList<Place> testPlaces = new ArrayList<>(places());
+		final AtomicInteger testCounter = new AtomicInteger(0);
+		final GlobalRef<AtomicInteger> globalTestCounter = new GlobalRef<>(testCounter);
+		final ArrayList<Place> testPlaces = new ArrayList<>(places());
 		testPlaces.remove(here());
 		assertFalse(testPlaces.isEmpty(), "There should be started at least one more Place.");
 		finish(() -> asyncAt(testPlaces.get(0), () -> {
-			AtomicInteger innerFinishTestCounter = new AtomicInteger(0);
-			GlobalRef<AtomicInteger> innerTestCounterRef = new GlobalRef<>(innerFinishTestCounter);
+			final AtomicInteger innerFinishTestCounter = new AtomicInteger(0);
+			final GlobalRef<AtomicInteger> innerTestCounterRef = new GlobalRef<>(innerFinishTestCounter);
 			finish(() -> asyncAt(globalTestCounter.home(), () -> {
 				async(() -> globalTestCounter.get().incrementAndGet());
 				async(() -> globalTestCounter.get().incrementAndGet());
 				async(() -> {
 					try {
 						Thread.sleep(100);
-					} catch (InterruptedException e) {
+					} catch (final InterruptedException e) {
 						e.printStackTrace();
 					}
 					globalTestCounter.get().incrementAndGet();
@@ -218,12 +158,74 @@ public class APGASCoreTests {
 
 			try {
 				Thread.sleep(100);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				e.printStackTrace();
 			}
 			asyncAt(globalTestCounter.home(), () -> globalTestCounter.get().incrementAndGet());
 			asyncAt(globalTestCounter.home(), () -> globalTestCounter.get().incrementAndGet());
 		}));
 		assertEquals(5, testCounter.get(), "The Counter should be set to 5 by the async Task.");
+	}
+
+	@Test
+	@DisplayName("Testing Finish with nested asyncAts")
+	void shouldWaitForNestedAsyncAt() {
+		final AtomicInteger testCounter = new AtomicInteger(0);
+		final GlobalRef<AtomicInteger> globalTestCounter = new GlobalRef<>(testCounter);
+		final ArrayList<Place> testPlaces = new ArrayList<>(places());
+		testPlaces.remove(here());
+		assertFalse(testPlaces.isEmpty(), "There should be started at least one more Place.");
+		finish(() -> asyncAt(testPlaces.get(0), () -> {
+			asyncAt(globalTestCounter.home(), () -> {
+				async(() -> globalTestCounter.get().incrementAndGet());
+				async(() -> globalTestCounter.get().incrementAndGet());
+				async(() -> globalTestCounter.get().incrementAndGet());
+			});
+			try {
+				Thread.sleep(100);
+			} catch (final InterruptedException e) {
+				e.printStackTrace();
+			}
+			asyncAt(globalTestCounter.home(), () -> {
+				globalTestCounter.get().incrementAndGet();
+			});
+
+			asyncAt(globalTestCounter.home(), () -> {
+				globalTestCounter.get().incrementAndGet();
+			});
+		}));
+		assertEquals(5, testCounter.get(), "The Counter should be set to 5 by the async Task.");
+	}
+
+	@Test
+	@DisplayName("Testing Finish with single async.")
+	void shouldWaitForSingleAsyncTaskToFinish() {
+		final AtomicInteger testCounter = new AtomicInteger(0);
+		finish(() -> async(() -> {
+			try {
+				Thread.sleep(100);
+			} catch (final InterruptedException e) {
+				e.printStackTrace();
+			}
+			testCounter.set(1);
+		}));
+		assertEquals(1, testCounter.get(), "The Counter should be set to 1 by the async Task.");
+	}
+
+	@Test
+	@DisplayName("Testing Finish with nested asyncs")
+	void shouldWaitForTransitiveSpawnedAsyncTasks() {
+		final AtomicInteger testCounter = new AtomicInteger(0);
+		finish(() -> async(() -> {
+			async(testCounter::incrementAndGet);
+			try {
+				Thread.sleep(100);
+			} catch (final InterruptedException e) {
+				e.printStackTrace();
+			}
+			testCounter.incrementAndGet();
+			async(testCounter::incrementAndGet);
+		}));
+		assertEquals(3, testCounter.get(), "testCounter should be incremented 3 time by asyncs.");
 	}
 }

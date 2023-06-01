@@ -11,12 +11,18 @@
 
 package apgas.launcher;
 
-import apgas.impl.HostManager;
 import java.util.Collections;
 import java.util.List;
 
+import apgas.impl.HostManager;
+
 /** The {@link NoLauncher} class does not spawn any place. */
 public class NoLauncher implements Launcher {
+
+	@Override
+	public boolean healthy() {
+		return true;
+	}
 
 	@Override
 	public List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception {
@@ -29,10 +35,5 @@ public class NoLauncher implements Launcher {
 
 	@Override
 	public void shutdown() {
-	}
-
-	@Override
-	public boolean healthy() {
-		return true;
 	}
 }

@@ -21,11 +21,45 @@ import apgas.Place;
  * Programmers willing to make their program malleable should define the handler
  * for their specific program using
  * {@link Constructs#defineMalleableHandle(MalleableHandler)}
- * 
+ *
  * @author Patrick Finnerty
  *
  */
 public interface MalleableHandler extends Serializable {
+
+	/**
+	 * Method called after the necessary number of places were added to the running
+	 * program. The distributed runtime has completed its adjustments and the
+	 * running program can now resume normal execution.
+	 *
+	 * @param nbPlaces        number of places currently running
+	 * @param continuedPlaces list containing the places already present prior to
+	 *                        the grow operation
+	 * @param newPlaces       list containing the places that were added to the
+	 *                        runtime
+	 */
+	public void postGrow(int nbPlaces, List<? extends Place> continuedPlaces, List<? extends Place> newPlaces);
+
+	/**
+	 * Method called after the necessary number of places were removed from the
+	 * running program. The distributed runtime has completed all its operations and
+	 * the running program can now resume normal execution.
+	 *
+	 * @param nbPlaces      number of places currently running
+	 * @param removedPlaces list containing the places that were removed
+	 */
+	public void postShrink(int nbPlaces, List<? extends Place> removedPlaces);
+
+	/**
+	 * Method called prior to an increase in the number of processes in the running
+	 * program. If any preparation is needed prior to the increase in the number of
+	 * places is needed, they should be performed before this method returns.
+	 * <p>
+	 * Method {@link #postGrow(int, List, List)} will be called next.
+	 *
+	 * @param nbPlaces number of places that will be added to the running program
+	 */
+	public void preGrow(int nbPlaces);
 
 	/**
 	 * Method called when a shrink order is received by the scheduler. In this
@@ -36,43 +70,9 @@ public interface MalleableHandler extends Serializable {
 	 * method.
 	 * <p>
 	 * Method {@link #postShrink(int, List)} will be called next.
-	 * 
+	 *
 	 * @param nbPlaces number of places that have to be released
 	 * @return the places that will be released
 	 */
 	public List<Place> preShrink(int nbPlaces);
-
-	/**
-	 * Method called prior to an increase in the number of processes in the running
-	 * program. If any preparation is needed prior to the increase in the number of
-	 * places is needed, they should be performed before this method returns.
-	 * <p>
-	 * Method {@link #postGrow(int, List, List)} will be called next.
-	 * 
-	 * @param nbPlaces number of places that will be added to the running program
-	 */
-	public void preGrow(int nbPlaces);
-
-	/**
-	 * Method called after the necessary number of places were removed from the
-	 * running program. The distributed runtime has completed all its operations and
-	 * the running program can now resume normal execution.
-	 * 
-	 * @param nbPlaces      number of places currently running
-	 * @param removedPlaces list containing the places that were removed
-	 */
-	public void postShrink(int nbPlaces, List<? extends Place> removedPlaces);
-
-	/**
-	 * Method called after the necessary number of places were added to the running
-	 * program. The distributed runtime has completed its adjustments and the
-	 * running program can now resume normal execution.
-	 * 
-	 * @param nbPlaces        number of places currently running
-	 * @param continuedPlaces list containing the places already present prior to
-	 *                        the grow operation
-	 * @param newPlaces       list containing the places that were added to the
-	 *                        runtime
-	 */
-	public void postGrow(int nbPlaces, List<? extends Place> continuedPlaces, List<? extends Place> newPlaces);
 }

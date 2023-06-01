@@ -28,141 +28,6 @@ import apgas.impl.elastic.SocketMalleableCommunicator;
 public final class Configuration<T> {
 
 	/**
-	 * Places per Node. Needed for all Script Launcher
-	 *
-	 * <p>
-	 * Defaults to 0 (not working)
-	 */
-	public static final String APGAS_PPERNODE_PROPERTY = "apgas.ppernode";
-
-	/** Configuration for property {@value #APGAS_PPERNODE_PROPERTY} */
-	public static final Configuration<Integer> APGAS_PPERNODE = new Configuration<>(APGAS_PPERNODE_PROPERTY,
-			Integer.class);
-	/**
-	 * Absolute Path for writing Scripts in Script Launcher. MUST contain "Remote"
-	 */
-	public static final String APGAS_SCRIPTNAME_PROPERTY = "apgas.scriptname";
-	
-	/** Configuration object for {@link #APGAS_SCRIPTNAME_PROPERTY} */
-	public static final Configuration<String> APGAS_SCRIPTNAME = new Configuration<>(APGAS_SCRIPTNAME_PROPERTY,
-			"RemoteDefaultScriptName", String.class);
-	/**
-	 * Property {@value #APGAS_PLACES_PROPERTY} specifies the desired number of
-	 * places (Integer property).
-	 *
-	 * <p>
-	 * Defaults to 1. If {@value #APGAS_PLACES_PROPERTY} is not set the global
-	 * runtime spawns the desired number of places, otherwise it waits for the
-	 * places to appear.
-	 */
-	public static final String APGAS_PLACES_PROPERTY = "apgas.places";
-	/** Configuration object for {@link #APGAS_PLACES_PROPERTY} */
-	public static final Configuration<Integer> APGAS_PLACES = new Configuration<>(APGAS_PLACES_PROPERTY, 1,
-			Integer.class);
-	/**
-	 * Property {@value #APGAS_MASTER_PROPERTY} optionally specifies the ip or
-	 * socket address of the master node (String property). Normally, this property is set by the runtime automatically.
-	 * <p>
-	 * If set to an ip, the global runtime connects to the first available global
-	 * runtime instance at this ip within the default port range.
-	 */
-	public static final String APGAS_MASTER_PROPERTY = "apgas.master";
-
-	/** Configuration object for {@link #APGAS_MASTER_PROPERTY} */
-	public static final Configuration<String> APGAS_MASTER = new Configuration<>(APGAS_MASTER_PROPERTY, String.class);
-	/**
-	 * Property {@value #APGAS_HOSTFILE_PROPERTY} specifies a filename that lists
-	 * hosts on which to launch places (String property).
-	 */
-	public static final String APGAS_HOSTFILE_PROPERTY = "apgas.hostfile";
-
-	/** Configuration object for {@link #APGAS_HOSTFILE_PROPERTY} */
-	public static final Configuration<String> APGAS_HOSTFILE = new Configuration<>(APGAS_HOSTFILE_PROPERTY,
-			String.class);
-	/**
-	 * Property {@value #APGAS_RESILIENT_PROPERTY} enables fault tolerance (Boolean
-	 * property).
-	 *
-	 * <p>
-	 * If set, the global runtime does not abort the execution if a place fails.
-	 */
-	public static final String APGAS_RESILIENT_PROPERTY = "apgas.resilient";
-
-	/** Configuration object for {@link #APGAS_RESILIENT_PROPERTY} */
-	public static final Configuration<Boolean> APGAS_RESILIENT = new Configuration<>(APGAS_RESILIENT_PROPERTY, false,
-			Boolean.class);
-	/**
-	 * Property {@value #APGAS_THREADS_PROPERTY} specifies the desired level of
-	 * parallelism (Integer property).
-	 *
-	 * <p>
-	 * The return value of {@code Runtime.getRuntime().availableProcessors()} is
-	 * used if this property is not set.
-	 */
-	public static final String APGAS_THREADS_PROPERTY = "apgas.threads";
-
-	/** Configuration object for {@link #APGAS_THREADS_PROPERTY} */
-	public static final Configuration<Integer> APGAS_THREADS = new Configuration<>(APGAS_THREADS_PROPERTY,
-			Runtime.getRuntime().availableProcessors(), Integer.class);
-	/**
-	 * Property {@value #APGAS_IMMEDIATE_THREADS_PROPERTY} specifies the desired
-	 * level of parallelism for the extra immediate thread pool (Integer property).
-	 *
-	 * <p>
-	 * 4 is used by default
-	 */
-	public static final String APGAS_IMMEDIATE_THREADS_PROPERTY = "apgas.immediate.threads";
-
-	/** Configuration object for {@link #APGAS_IMMEDIATE_THREADS_PROPERTY} */
-	public static final Configuration<Integer> APGAS_IMMEDIATE_THREADS = new Configuration<>(
-			APGAS_IMMEDIATE_THREADS_PROPERTY, 4, Integer.class);
-	/**
-	 * Upper bound on the number of persistent threads in the thread pool (Integer
-	 * property).
-	 *
-	 * <p>
-	 * Defaults to 256.
-	 */
-	public static final String APGAS_MAX_THREADS_PROPERTY = "apgas.max.threads";
-
-	/** Configuration for property {@value #APGAS_MAX_THREADS_PROPERTY} */
-	public static final Configuration<Integer> APGAS_MAX_THREADS = new Configuration<>(APGAS_MAX_THREADS_PROPERTY, 256,
-			Integer.class);
-
-	/**
-	 * Specifies the java command to run for spawning places (String property).
-	 *
-	 * <p>
-	 * Defaults to "{@code java}".
-	 */
-	public static final String APGAS_JAVA_PROPERTY = "apgas.java";
-
-	/** Configuration for property {@value #APGAS_JAVA_PROPERTY} */
-	public static final Configuration<String> APGAS_JAVA = new Configuration<>(APGAS_JAVA_PROPERTY, "java",
-			String.class);
-	/**
-	 * Controls the verbosity of the launcher (Boolean property).
-	 *
-	 * <p>
-	 * Defaults to "{@code false}".
-	 */
-	public static final String APGAS_VERBOSE_LAUNCHER_PROPERTY = "apgas.verbose.launcher";
-
-	/** Configuration for property {@value #APGAS_VERBOSE_LAUNCHER_PROPERTY} */
-	public static final Configuration<Boolean> APGAS_VERBOSE_LAUNCHER = new Configuration<>(
-			APGAS_VERBOSE_LAUNCHER_PROPERTY, false, Boolean.class);
-	/**
-	 * Name of the launcher implementation class to instantiate (String property).
-	 *
-	 * <p>
-	 * Defaults to "{@code apgas.launcher.SshLauncher}".
-	 */
-	public static final String APGAS_LAUNCHER_PROPERTY = "apgas.launcher";
-
-	/** Configuration for property {@value #APGAS_VERBOSE_LAUNCHER_PROPERTY} */
-	public static final Configuration<String> APGAS_LAUNCHER = new Configuration<>(APGAS_LAUNCHER_PROPERTY,
-			"apgas.launcher.SshLauncher", String.class);
-	/**
 	 * Count of backups used by the internal distributed data memory. (Integer
 	 * property)
 	 *
@@ -173,71 +38,8 @@ public final class Configuration<T> {
 	 */
 	public static final String APGAS_BACKUPCOUNT_PROPERTY = "apgas.backupcount";
 
-	/** Configuration object for {@link #APGAS_BACKUPCOUNT_PROPERTY} */
-	public static final Configuration<Integer> APGAS_BACKUPCOUNT = new Configuration<>(APGAS_BACKUPCOUNT_PROPERTY, 1,
-			Integer.class);
-	/**
-	 * This Property is set by the Master or starting Place to set the id of the
-	 * Place to start, at launch time. This gives the starting Place (Master atm.)
-	 * the responsibility of the ID Management.
-	 */
-	public static final String APGAS_PLACE_ID_PROPERTY = "apgas.place.id";
-
-	/** Configuration for property {@value #APGAS_PLACE_ID_PROPERTY} */
-	public static final Configuration<Integer> APGAS_PLACE_ID = new Configuration<>(APGAS_PLACE_ID_PROPERTY, 0,
-			Integer.class);
-
-	/** This Property sets the Port of the Master Place. */
-	public static final String APGAS_PORT_PROPERTY = "apgas.port";
-
-	/** Configuration for property {@value #APGAS_PORT_PROPERTY} */
-	public static final Configuration<Integer> APGAS_PORT = new Configuration<>(APGAS_PORT_PROPERTY, 5701,
-			Integer.class);
-
-	/**
-	 * This Property can define the network interface to be used Examples: Kassel
-	 * FB16: eth0: "141.51.205.*" eth1: "192.168.205.*" ib0: "192.168.169.*"
-	 *
-	 * <p>
-	 * Goethe: eno1: "10.151.*.*" ib0: "10.149.*.*"
-	 */
-	public static final String APGAS_NETWORK_INTERFACE_PROPERTY = "apgas.network.interface";
-
-	/** Configuration for property {@value #APGAS_NETWORK_INTERFACE_PROPERTY} */
-	public static final Configuration<String> APGAS_NETWORK_INTERFACE = new Configuration<>(
-			APGAS_NETWORK_INTERFACE_PROPERTY, String.class);
-
 	/** This Property enables and disables the consoleprinter. */
 	public static final String APGAS_CONSOLEPRINTER_PROPERTY = "apgas.consoleprinter";
-
-	/** Configuration object for {@link #APGAS_CONSOLEPRINTER_PROPERTY} */
-	public static final Configuration<Boolean> APGAS_CONSOLEPRINTER = new Configuration<>(APGAS_CONSOLEPRINTER_PROPERTY,
-			false, Boolean.class);
-
-	/**
-	 * This Property defines the strategy of the hostmanager: 0 : Places are added
-	 * cyclical to the nodes (default) 1 : Nodes are filled one after the other.
-	 * This can result in hosts without places
-	 */
-	public static final String APGAS_HOSTMANAGER_STRATEGY_PROPERTY = "apgas.hostmanager.strategy";
-
-	/** Configuration object for {@link #APGAS_HOSTMANAGER_STRATEGY_PROPERTY} */
-	public static final Configuration<Integer> APGAS_HOSTMANAGER_STRATEGY = new Configuration<>(
-			APGAS_HOSTMANAGER_STRATEGY_PROPERTY, 0, Integer.class);
-
-	/**
-	 * This String is used to define the property setting which indicated if the
-	 * running APGAS program is elastic. Possible values are:
-	 * <ul>
-	 * <li>fixed: (default), no change in the number of places during execution
-	 * <li>evolving: (Not implemented yet), the running program may initiate
-	 * requests for additional places / release some during execution
-	 * <li>malleable: the running program may dynamically change the number of
-	 * running places following orders given by the scheduler
-	 * </ul>
-	 */
-	public static final String APGAS_ELASTIC_PROPERTY = "apgas.elastic";
-
 	/**
 	 * Possible value for configuration {@link #APGAS_ELASTIC}. This value sets the
 	 * number of places to remain fixed throughout execution.
@@ -253,30 +55,310 @@ public final class Configuration<T> {
 	 * to define the actions to perform before and after a malleable change.
 	 */
 	public static final String APGAS_ELASTIC_MALLEABLE = "malleable";
+	/**
+	 * This String is used to define the property setting which indicated if the
+	 * running APGAS program is elastic. Possible values are:
+	 * <ul>
+	 * <li>fixed: (default), no change in the number of places during execution
+	 * <li>evolving: (Not implemented yet), the running program may initiate
+	 * requests for additional places / release some during execution
+	 * <li>malleable: the running program may dynamically change the number of
+	 * running places following orders given by the scheduler
+	 * </ul>
+	 */
+	public static final String APGAS_ELASTIC_PROPERTY = "apgas.elastic";
+	/**
+	 * Property {@value #APGAS_HOSTFILE_PROPERTY} specifies a filename that lists
+	 * hosts on which to launch places (String property).
+	 */
+	public static final String APGAS_HOSTFILE_PROPERTY = "apgas.hostfile";
+	/**
+	 * This Property defines the strategy of the hostmanager: 0 : Places are added
+	 * cyclical to the nodes (default) 1 : Nodes are filled one after the other.
+	 * This can result in hosts without places
+	 */
+	public static final String APGAS_HOSTMANAGER_STRATEGY_PROPERTY = "apgas.hostmanager.strategy";
 
 	/**
-	 * Property defining if the program is allowed to change the number of running
-	 * processes during execution.
+	 * Property {@value #APGAS_IMMEDIATE_THREADS_PROPERTY} specifies the desired
+	 * level of parallelism for the extra immediate thread pool (Integer property).
+	 *
+	 * <p>
+	 * 4 is used by default
 	 */
-	public static final Configuration<String> APGAS_ELASTIC = new Configuration<>(APGAS_ELASTIC_PROPERTY,
-			APGAS_ELASTIC_FIXED, String.class);
+	public static final String APGAS_IMMEDIATE_THREADS_PROPERTY = "apgas.immediate.threads";
+	/**
+	 * Specifies the java command to run for spawning places (String property).
+	 *
+	 * <p>
+	 * Defaults to "{@code java}".
+	 */
+	public static final String APGAS_JAVA_PROPERTY = "apgas.java";
 
+	/**
+	 * Name of the launcher implementation class to instantiate (String property).
+	 *
+	 * <p>
+	 * Defaults to "{@code apgas.launcher.SshLauncher}".
+	 */
+	public static final String APGAS_LAUNCHER_PROPERTY = "apgas.launcher";
 	/**
 	 * String used to define the class used as malleable communicator
 	 */
 	public static final String APGAS_MALLEABLE_COMMUNICATOR_PROPERTY = "apgas.malleable_communicator";
-	
+
+	/**
+	 * Property {@value #APGAS_MASTER_PROPERTY} optionally specifies the ip or
+	 * socket address of the master node (String property). Normally, this property
+	 * is set by the runtime automatically.
+	 * <p>
+	 * If set to an ip, the global runtime connects to the first available global
+	 * runtime instance at this ip within the default port range.
+	 */
+	public static final String APGAS_MASTER_PROPERTY = "apgas.master";
+	/**
+	 * Upper bound on the number of persistent threads in the thread pool (Integer
+	 * property).
+	 *
+	 * <p>
+	 * Defaults to 256.
+	 */
+	public static final String APGAS_MAX_THREADS_PROPERTY = "apgas.max.threads";
+
+	/**
+	 * This Property can define the network interface to be used Examples: Kassel
+	 * FB16: eth0: "141.51.205.*" eth1: "192.168.205.*" ib0: "192.168.169.*"
+	 *
+	 * <p>
+	 * Goethe: eno1: "10.151.*.*" ib0: "10.149.*.*"
+	 */
+	public static final String APGAS_NETWORK_INTERFACE_PROPERTY = "apgas.network.interface";
+	/**
+	 * This Property is set by the Master or starting Place to set the id of the
+	 * Place to start, at launch time. This gives the starting Place (Master atm.)
+	 * the responsibility of the ID Management.
+	 */
+	public static final String APGAS_PLACE_ID_PROPERTY = "apgas.place.id";
+
+	/**
+	 * Property {@value #APGAS_PLACES_PROPERTY} specifies the desired number of
+	 * places (Integer property).
+	 *
+	 * <p>
+	 * Defaults to 1. If {@value #APGAS_PLACES_PROPERTY} is not set the global
+	 * runtime spawns the desired number of places, otherwise it waits for the
+	 * places to appear.
+	 */
+	public static final String APGAS_PLACES_PROPERTY = "apgas.places";
+	/** This Property sets the Port of the Master Place. */
+	public static final String APGAS_PORT_PROPERTY = "apgas.port";
+
+	/**
+	 * Places per Node. Needed for all Script Launcher
+	 *
+	 * <p>
+	 * Defaults to 0 (not working)
+	 */
+	public static final String APGAS_PPERNODE_PROPERTY = "apgas.ppernode";
+
+	/**
+	 * Property {@value #APGAS_RESILIENT_PROPERTY} enables fault tolerance (Boolean
+	 * property).
+	 *
+	 * <p>
+	 * If set, the global runtime does not abort the execution if a place fails.
+	 */
+	public static final String APGAS_RESILIENT_PROPERTY = "apgas.resilient";
+
+	/**
+	 * Absolute Path for writing Scripts in Script Launcher. MUST contain "Remote"
+	 */
+	public static final String APGAS_SCRIPTNAME_PROPERTY = "apgas.scriptname";
+	/**
+	 * Property {@value #APGAS_THREADS_PROPERTY} specifies the desired level of
+	 * parallelism (Integer property).
+	 *
+	 * <p>
+	 * The return value of {@code Runtime.getRuntime().availableProcessors()} is
+	 * used if this property is not set.
+	 */
+	public static final String APGAS_THREADS_PROPERTY = "apgas.threads";
+
+	/**
+	 * Controls the verbosity of the launcher (Boolean property).
+	 *
+	 * <p>
+	 * Defaults to "{@code false}".
+	 */
+	public static final String APGAS_VERBOSE_LAUNCHER_PROPERTY = "apgas.verbose.launcher";
+	/** Configuration object for {@link #APGAS_BACKUPCOUNT_PROPERTY} */
+	public static final Configuration<Integer> CONFIG_APGAS_BACKUPCOUNT = new Configuration<>(APGAS_BACKUPCOUNT_PROPERTY, 1,
+			Integer.class);
+
+	/** Configuration object for {@link #APGAS_CONSOLEPRINTER_PROPERTY} */
+	public static final Configuration<Boolean> CONFIG_APGAS_CONSOLEPRINTER = new Configuration<>(APGAS_CONSOLEPRINTER_PROPERTY,
+			false, Boolean.class);
+	/**
+	 * Property defining if the program is allowed to change the number of running
+	 * processes during execution.
+	 */
+	public static final Configuration<String> CONFIG_APGAS_ELASTIC = new Configuration<>(APGAS_ELASTIC_PROPERTY,
+			APGAS_ELASTIC_FIXED, String.class);
+
+	/** Configuration object for {@link #APGAS_HOSTFILE_PROPERTY} */
+	public static final Configuration<String> CONFIG_APGAS_HOSTFILE = new Configuration<>(APGAS_HOSTFILE_PROPERTY,
+			String.class);
+	/** Configuration object for {@link #APGAS_HOSTMANAGER_STRATEGY_PROPERTY} */
+	public static final Configuration<Integer> CONFIG_APGAS_HOSTMANAGER_STRATEGY = new Configuration<>(
+			APGAS_HOSTMANAGER_STRATEGY_PROPERTY, 0, Integer.class);
+
+	/** Configuration object for {@link #APGAS_IMMEDIATE_THREADS_PROPERTY} */
+	public static final Configuration<Integer> CONFIG_APGAS_IMMEDIATE_THREADS = new Configuration<>(
+			APGAS_IMMEDIATE_THREADS_PROPERTY, 4, Integer.class);
+
+	/** Configuration for property {@value #APGAS_JAVA_PROPERTY} */
+	public static final Configuration<String> CONFIG_APGAS_JAVA = new Configuration<>(APGAS_JAVA_PROPERTY, "java",
+			String.class);
+
+	/** Configuration for property {@value #APGAS_VERBOSE_LAUNCHER_PROPERTY} */
+	public static final Configuration<String> CONFIG_APGAS_LAUNCHER = new Configuration<>(APGAS_LAUNCHER_PROPERTY,
+			"apgas.launcher.SshLauncher", String.class);
+
 	/**
 	 * Property defining the class used to communicate with the scheduler when a
 	 * malleable program is running
 	 */
-	public static final Configuration<String> APGAS_MALLEABLE_COMMUNICATOR = new Configuration<>(
+	public static final Configuration<String> CONFIG_APGAS_MALLEABLE_COMMUNICATOR = new Configuration<>(
 			APGAS_MALLEABLE_COMMUNICATOR_PROPERTY, SocketMalleableCommunicator.class.getCanonicalName(), String.class);
 
-	private final String name;
-	private final Class<T> propertyType;
-	private T defaultValue;
+	/** Configuration object for {@link #APGAS_MASTER_PROPERTY} */
+	public static final Configuration<String> CONFIG_APGAS_MASTER = new Configuration<>(APGAS_MASTER_PROPERTY, String.class);
+
+	/** Configuration for property {@value #APGAS_MAX_THREADS_PROPERTY} */
+	public static final Configuration<Integer> CONFIG_APGAS_MAX_THREADS = new Configuration<>(APGAS_MAX_THREADS_PROPERTY, 256,
+			Integer.class);
+
+	/** Configuration for property {@value #APGAS_NETWORK_INTERFACE_PROPERTY} */
+	public static final Configuration<String> CONFIG_APGAS_NETWORK_INTERFACE = new Configuration<>(
+			APGAS_NETWORK_INTERFACE_PROPERTY, String.class);
+
+	/** Configuration for property {@value #APGAS_PLACE_ID_PROPERTY} */
+	public static final Configuration<Integer> CONFIG_APGAS_PLACE_ID = new Configuration<>(APGAS_PLACE_ID_PROPERTY, 0,
+			Integer.class);
+
+	/** Configuration object for {@link #APGAS_PLACES_PROPERTY} */
+	public static final Configuration<Integer> CONFIG_APGAS_PLACES = new Configuration<>(APGAS_PLACES_PROPERTY, 1,
+			Integer.class);
+
+	/** Configuration for property {@value #APGAS_PORT_PROPERTY} */
+	public static final Configuration<Integer> CONFIG_APGAS_PORT = new Configuration<>(APGAS_PORT_PROPERTY, 5701,
+			Integer.class);
+
+	/** Configuration for property {@value #APGAS_PPERNODE_PROPERTY} */
+	public static final Configuration<Integer> CONFIG_APGAS_PPERNODE = new Configuration<>(APGAS_PPERNODE_PROPERTY,
+			Integer.class);
+
+	/** Configuration object for {@link #APGAS_RESILIENT_PROPERTY} */
+	public static final Configuration<Boolean> CONFIG_APGAS_RESILIENT = new Configuration<>(APGAS_RESILIENT_PROPERTY, false,
+			Boolean.class);
+
+	/** Configuration object for {@link #APGAS_SCRIPTNAME_PROPERTY} */
+	public static final Configuration<String> CONFIG_APGAS_SCRIPTNAME = new Configuration<>(APGAS_SCRIPTNAME_PROPERTY,
+			"RemoteDefaultScriptName", String.class);
+
+	/** Configuration object for {@link #APGAS_THREADS_PROPERTY} */
+	public static final Configuration<Integer> CONFIG_APGAS_THREADS = new Configuration<>(APGAS_THREADS_PROPERTY,
+			Runtime.getRuntime().availableProcessors(), Integer.class);
+
+	/** Configuration for property {@value #APGAS_VERBOSE_LAUNCHER_PROPERTY} */
+	public static final Configuration<Boolean> CONFIG_APGAS_VERBOSE_LAUNCHER = new Configuration<>(
+			APGAS_VERBOSE_LAUNCHER_PROPERTY, false, Boolean.class);
+
+	/**
+	 * Initializes all the {@link Configuration} objects and reads the properties
+	 * from the runtime to assign the adequate values to these objects
+	 */
+	public static void initAll() {
+		final List<Configuration<?>> allConfigs = new ArrayList<>();
+		allConfigs.add(CONFIG_APGAS_PLACES);
+		allConfigs.add(CONFIG_APGAS_THREADS);
+		allConfigs.add(CONFIG_APGAS_IMMEDIATE_THREADS);
+		allConfigs.add(CONFIG_APGAS_MAX_THREADS);
+		allConfigs.add(CONFIG_APGAS_RESILIENT);
+		allConfigs.add(CONFIG_APGAS_BACKUPCOUNT);
+		allConfigs.add(CONFIG_APGAS_PPERNODE);
+		allConfigs.add(CONFIG_APGAS_MASTER);
+		allConfigs.add(CONFIG_APGAS_HOSTFILE);
+		allConfigs.add(CONFIG_APGAS_JAVA);
+		allConfigs.add(CONFIG_APGAS_VERBOSE_LAUNCHER);
+		allConfigs.add(CONFIG_APGAS_LAUNCHER);
+		allConfigs.add(CONFIG_APGAS_PLACE_ID);
+		allConfigs.add(CONFIG_APGAS_PORT);
+		allConfigs.add(CONFIG_APGAS_NETWORK_INTERFACE);
+		allConfigs.add(CONFIG_APGAS_CONSOLEPRINTER);
+		allConfigs.add(CONFIG_APGAS_HOSTMANAGER_STRATEGY);
+		allConfigs.add(CONFIG_APGAS_ELASTIC);
+		allConfigs.add(CONFIG_APGAS_MALLEABLE_COMMUNICATOR);
+
+		for (final Configuration<?> c : allConfigs) {
+			c.get();
+		}
+	}
+
+	/**
+	 * Prints the configuration in use at every place of the running APGAS for Java
+	 * runtime
+	 */
+	public static void printAllConfigs() {
+		Constructs.finish(() -> {
+			for (final Place place : Constructs.places()) {
+				Constructs.at(place, () -> {
+					Configuration.printConfigs();
+				});
+			}
+		});
+	}
+
+	/**
+	 * Prints all the various configuration items of the APGAS for Java runtime
+	 */
+	public static void printConfigs() {
+		final List<Configuration<?>> allConfigs = new ArrayList<>();
+		allConfigs.add(CONFIG_APGAS_PLACES);
+		allConfigs.add(CONFIG_APGAS_THREADS);
+		allConfigs.add(CONFIG_APGAS_IMMEDIATE_THREADS);
+		allConfigs.add(CONFIG_APGAS_MAX_THREADS);
+		allConfigs.add(CONFIG_APGAS_RESILIENT);
+		allConfigs.add(CONFIG_APGAS_BACKUPCOUNT);
+		allConfigs.add(CONFIG_APGAS_PPERNODE);
+		allConfigs.add(CONFIG_APGAS_MASTER);
+		allConfigs.add(CONFIG_APGAS_HOSTFILE);
+		allConfigs.add(CONFIG_APGAS_JAVA);
+		allConfigs.add(CONFIG_APGAS_VERBOSE_LAUNCHER);
+		allConfigs.add(CONFIG_APGAS_LAUNCHER);
+		allConfigs.add(CONFIG_APGAS_PLACE_ID);
+		allConfigs.add(CONFIG_APGAS_PORT);
+		allConfigs.add(CONFIG_APGAS_NETWORK_INTERFACE);
+		allConfigs.add(CONFIG_APGAS_CONSOLEPRINTER);
+		allConfigs.add(CONFIG_APGAS_HOSTMANAGER_STRATEGY);
+		allConfigs.add(CONFIG_APGAS_ELASTIC);
+		allConfigs.add(CONFIG_APGAS_MALLEABLE_COMMUNICATOR);
+
+		final StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("APGAS config on " + Constructs.here() + ":\n");
+		for (final Configuration<?> c : allConfigs) {
+			stringBuilder.append("  " + c.getName() + "=" + c.get() + "\n");
+		}
+		System.out.println(stringBuilder.toString());
+	}
+
 	private T cachedValue;
+
+	private T defaultValue;
+
+	private final String name;
+
+	private final Class<T> propertyType;
 
 	/**
 	 * Constructor
@@ -305,82 +387,6 @@ public final class Configuration<T> {
 	}
 
 	/**
-	 * Prints the configuration in use at every place of the running APGAS for Java runtime
-	 */
-	public static void printAllConfigs() {
-		Constructs.finish(() -> {
-			for (final Place place : Constructs.places()) {
-				Constructs.at(place, () -> {
-					Configuration.printConfigs();
-				});
-			}
-		});
-	}
-
-	/**
-	 * Prints all the various configuration items of the APGAS for Java runtime
-	 */
-	public static void printConfigs() {
-		List<Configuration<?>> allConfigs = new ArrayList<>();
-		allConfigs.add(APGAS_PLACES);
-		allConfigs.add(APGAS_THREADS);
-		allConfigs.add(APGAS_IMMEDIATE_THREADS);
-		allConfigs.add(APGAS_MAX_THREADS);
-		allConfigs.add(APGAS_RESILIENT);
-		allConfigs.add(APGAS_BACKUPCOUNT);
-		allConfigs.add(APGAS_PPERNODE);
-		allConfigs.add(APGAS_MASTER);
-		allConfigs.add(APGAS_HOSTFILE);
-		allConfigs.add(APGAS_JAVA);
-		allConfigs.add(APGAS_VERBOSE_LAUNCHER);
-		allConfigs.add(APGAS_LAUNCHER);
-		allConfigs.add(APGAS_PLACE_ID);
-		allConfigs.add(APGAS_PORT);
-		allConfigs.add(APGAS_NETWORK_INTERFACE);
-		allConfigs.add(APGAS_CONSOLEPRINTER);
-		allConfigs.add(APGAS_HOSTMANAGER_STRATEGY);
-		allConfigs.add(APGAS_ELASTIC);
-		allConfigs.add(APGAS_MALLEABLE_COMMUNICATOR);
-
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("APGAS config on " + Constructs.here() + ":\n");
-		for (final Configuration<?> c : allConfigs) {
-			stringBuilder.append("  " + c.getName() + "=" + c.get() + "\n");
-		}
-		System.out.println(stringBuilder.toString());
-	}
-
-	/**
-	 * Initializes all the {@link Configuration} objects and reads the properties from the runtime to assign the adequate values to these objects
-	 */
-	public static void initAll() {
-		List<Configuration<?>> allConfigs = new ArrayList<>();
-		allConfigs.add(APGAS_PLACES);
-		allConfigs.add(APGAS_THREADS);
-		allConfigs.add(APGAS_IMMEDIATE_THREADS);
-		allConfigs.add(APGAS_MAX_THREADS);
-		allConfigs.add(APGAS_RESILIENT);
-		allConfigs.add(APGAS_BACKUPCOUNT);
-		allConfigs.add(APGAS_PPERNODE);
-		allConfigs.add(APGAS_MASTER);
-		allConfigs.add(APGAS_HOSTFILE);
-		allConfigs.add(APGAS_JAVA);
-		allConfigs.add(APGAS_VERBOSE_LAUNCHER);
-		allConfigs.add(APGAS_LAUNCHER);
-		allConfigs.add(APGAS_PLACE_ID);
-		allConfigs.add(APGAS_PORT);
-		allConfigs.add(APGAS_NETWORK_INTERFACE);
-		allConfigs.add(APGAS_CONSOLEPRINTER);
-		allConfigs.add(APGAS_HOSTMANAGER_STRATEGY);
-		allConfigs.add(APGAS_ELASTIC);
-		allConfigs.add(APGAS_MALLEABLE_COMMUNICATOR);
-
-		for (final Configuration<?> c : allConfigs) {
-			c.get();
-		}
-	}
-
-	/**
 	 * retrieve the PropertyValue of the Configuration.
 	 *
 	 * <p>
@@ -395,42 +401,61 @@ public final class Configuration<T> {
 	@SuppressWarnings("unchecked")
 	public synchronized T get() {
 
-		if (this.cachedValue != null) {
+		if (cachedValue != null) {
 			return cachedValue;
 		}
 
-		String value = System.getProperty(this.name);
+		final String value = System.getProperty(name);
 		if (value == null) {
-			if (this.defaultValue != null) {
-				this.set(this.defaultValue);
+			if (defaultValue != null) {
+				this.set(defaultValue);
 			}
 			return defaultValue;
 		}
 
-		if (this.propertyType.equals(Boolean.class)) {
-			Boolean aBoolean = Boolean.valueOf(value);
-			this.cachedValue = (T) aBoolean;
-			return this.cachedValue;
+		if (propertyType.equals(Boolean.class)) {
+			final Boolean aBoolean = Boolean.valueOf(value);
+			cachedValue = (T) aBoolean;
+			return cachedValue;
 		}
 
-		if (this.propertyType.equals(Integer.class)) {
-			Integer anInt = Integer.valueOf(value);
-			this.cachedValue = (T) anInt;
-			return this.cachedValue;
+		if (propertyType.equals(Integer.class)) {
+			final Integer anInt = Integer.valueOf(value);
+			cachedValue = (T) anInt;
+			return cachedValue;
 		}
 
-		if (this.propertyType.equals(Double.class)) {
-			Double aDouble = Double.valueOf(value);
-			this.cachedValue = (T) aDouble;
-			return this.cachedValue;
+		if (propertyType.equals(Double.class)) {
+			final Double aDouble = Double.valueOf(value);
+			cachedValue = (T) aDouble;
+			return cachedValue;
 		}
 
-		if (this.propertyType.equals(String.class)) {
-			this.cachedValue = (T) value;
-			return this.cachedValue;
+		if (propertyType.equals(String.class)) {
+			cachedValue = (T) value;
+			return cachedValue;
 		}
 
 		return (T) value;
+	}
+
+	/**
+	 * getter
+	 *
+	 * @return The Name of the Configuration
+	 */
+	public synchronized String getName() {
+		return name;
+	}
+
+	/**
+	 * set the given Value as Value for this Configuration.
+	 *
+	 * @param value The Value to Set for this Configuration
+	 */
+	public synchronized void set(T value) {
+		cachedValue = value;
+		System.setProperty(name, String.valueOf(cachedValue));
 	}
 
 	/**
@@ -441,24 +466,5 @@ public final class Configuration<T> {
 	 */
 	public synchronized void setDefaultValue(T defaultValue) {
 		this.defaultValue = defaultValue;
-	}
-
-	/**
-	 * set the given Value as Value for this Configuration.
-	 *
-	 * @param value The Value to Set for this Configuration
-	 */
-	public synchronized void set(T value) {
-		this.cachedValue = value;
-		System.setProperty(this.name, String.valueOf(this.cachedValue));
-	}
-
-	/**
-	 * getter
-	 *
-	 * @return The Name of the Configuration
-	 */
-	public synchronized String getName() {
-		return name;
 	}
 }

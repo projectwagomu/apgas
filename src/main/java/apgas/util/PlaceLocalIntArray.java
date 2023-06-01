@@ -11,14 +11,26 @@
 
 package apgas.util;
 
-import apgas.Place;
 import java.util.Collection;
+
+import apgas.Place;
 
 /**
  * The {@link PlaceLocalIntArray} class implements a map from places to
  * {@code int} arrays.
  */
 public class PlaceLocalIntArray extends PlaceLocalObject {
+
+	/**
+	 * Constructs a {@link PlaceLocalArray} instance.
+	 *
+	 * @param places      a collection of places with no repetition
+	 * @param localLength the length of each chunk
+	 * @return the place local array
+	 */
+	public static PlaceLocalIntArray make(Collection<? extends Place> places, int localLength) {
+		return PlaceLocalObject.make(places, () -> new PlaceLocalIntArray(localLength));
+	}
 
 	/** The local array. */
 	private final int[] array;
@@ -30,17 +42,6 @@ public class PlaceLocalIntArray extends PlaceLocalObject {
 	 */
 	private PlaceLocalIntArray(int n) {
 		array = new int[n];
-	}
-
-	/**
-	 * Constructs a {@link PlaceLocalArray} instance.
-	 *
-	 * @param places      a collection of places with no repetition
-	 * @param localLength the length of each chunk
-	 * @return the place local array
-	 */
-	public static PlaceLocalIntArray make(Collection<? extends Place> places, int localLength) {
-		return PlaceLocalObject.make(places, () -> new PlaceLocalIntArray(localLength));
 	}
 
 	/**

@@ -11,10 +11,11 @@
 
 package apgas.util;
 
-import apgas.Place;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
+
+import apgas.Place;
 
 /**
  * The {@link PlaceLocalArray} class implements a map from places to arrays.
@@ -22,18 +23,6 @@ import java.util.Collection;
  * @param <T> the type of the array elements
  */
 public class PlaceLocalArray<T extends Serializable> extends PlaceLocalObject {
-
-	/** The local array. */
-	private final T[] array;
-
-	/**
-	 * Initializes the local array.
-	 *
-	 * @param array the local array
-	 */
-	private PlaceLocalArray(T[] array) {
-		this.array = array;
-	}
 
 	/**
 	 * Constructs a {@link PlaceLocalArray} instance.
@@ -48,6 +37,18 @@ public class PlaceLocalArray<T extends Serializable> extends PlaceLocalObject {
 	public static <T extends Serializable> PlaceLocalArray<T> make(Collection<? extends Place> places, int localLength,
 			T... array) {
 		return PlaceLocalObject.make(places, () -> new PlaceLocalArray<>(Arrays.copyOf(array, localLength)));
+	}
+
+	/** The local array. */
+	private final T[] array;
+
+	/**
+	 * Initializes the local array.
+	 *
+	 * @param array the local array
+	 */
+	private PlaceLocalArray(T[] array) {
+		this.array = array;
 	}
 
 	/**

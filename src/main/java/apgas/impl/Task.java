@@ -13,14 +13,15 @@ package apgas.impl;
 
 import static apgas.Constructs.here;
 
-import apgas.DeadPlaceException;
-import apgas.SerializableJob;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
+
+import apgas.DeadPlaceException;
+import apgas.SerializableJob;
 
 /**
  * The {@link Task} class represents an APGAS task.
@@ -31,18 +32,18 @@ import java.util.concurrent.RecursiveAction;
  */
 public final class Task extends RecursiveAction implements SerializableRunnable {
 
-	private static final long serialVersionUID = 5288338719050788305L;
-
 	private static final SerializableJob NULL = () -> {
 	};
+
+	private static final long serialVersionUID = 5288338719050788305L;
+	/** The function to run. */
+	private SerializableJob f;
 	/** The finish object for this {@link Task} instance. */
 	Finish finish;
+
 	/** System wide unique id of this task */
 	/** The place of the parent task. */
 	private int parent;
-
-	/** The function to run. */
-	private SerializableJob f;
 
 	/**
 	 * Constructs a new {@link Task}.
@@ -58,20 +59,36 @@ public final class Task extends RecursiveAction implements SerializableRunnable 
 	}
 
 	/**
-	 * Returns the finish managing this task
-	 * @return the finish to which this task belongs to
+	 * Submits the task for asynchronous execution.
+	 *
+	 * @param worker the worker doing the submission or null if not a worker thread
 	 */
-	public Finish getFinish() {
-		return finish;
+	void async(Worker worker) {
+		finish.submit(parent);
+
+		if (worker == null) {
+			GlobalRuntimeImpl.getRuntime().execute(this);
+		} else {
+			fork();
+		}
 	}
 
-	/** Submits the task for asynchronous execution. */
-	@Override
-	public void run() {
+	/**
+	 * Submits the task for asynchronous execution at place p.
+	 *
+	 * <p>
+	 * If serialization fails, the task is dropped and the task's finish is
+	 * notified. The exception is logged to System.err and masked unless
+	 * APGAS_SERIALIZATION_EXCEPTION is set to "true".
+	 *
+	 * @param p the place ID
+	 */
+	void asyncAt(int p) {
 		try {
-			async(null);
-		} catch (final DeadPlaceException e) {
-			// source place has died while task was in transit, discard
+			GlobalRuntimeImpl.getRuntime().transport.send(p, this);
+		} catch (final Throwable e) {
+			finish.unspawn(p);
+			throw e;
 		}
 	}
 
@@ -88,21 +105,6 @@ public final class Task extends RecursiveAction implements SerializableRunnable 
 			finish.addSuppressed(t);
 		}
 		finish.tell();
-	}
-
-	/**
-	 * Submits the task for asynchronous execution.
-	 *
-	 * @param worker the worker doing the submission or null if not a worker thread
-	 */
-	void async(Worker worker) {
-		finish.submit(parent);
-
-		if (worker == null) {
-			GlobalRuntimeImpl.getRuntime().execute(this);
-		} else {
-			fork();
-		}
 	}
 
 	/**
@@ -136,34 +138,12 @@ public final class Task extends RecursiveAction implements SerializableRunnable 
 	}
 
 	/**
-	 * Submits the task for asynchronous execution at place p.
+	 * Returns the finish managing this task
 	 *
-	 * <p>
-	 * If serialization fails, the task is dropped and the task's finish is
-	 * notified. The exception is logged to System.err and masked unless
-	 * APGAS_SERIALIZATION_EXCEPTION is set to "true".
-	 *
-	 * @param p the place ID
+	 * @return the finish to which this task belongs to
 	 */
-	void asyncAt(int p) {
-		try {
-			GlobalRuntimeImpl.getRuntime().transport.send(p, this);
-		} catch (final Throwable e) {
-			finish.unspawn(p);
-			throw e;
-		}
-	}
-
-	/**
-	 * Serializes the task.
-	 *
-	 * @param out the object output stream
-	 * @throws IOException if I/O errors occur
-	 */
-	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.writeObject(finish);
-		out.writeInt(parent);
-		out.writeObject(f);
+	public Finish getFinish() {
+		return finish;
 	}
 
 	/**
@@ -188,5 +168,27 @@ public final class Task extends RecursiveAction implements SerializableRunnable 
 			finish.addSuppressed(e);
 			f = NULL;
 		}
+	}
+
+	/** Submits the task for asynchronous execution. */
+	@Override
+	public void run() {
+		try {
+			async(null);
+		} catch (final DeadPlaceException e) {
+			// source place has died while task was in transit, discard
+		}
+	}
+
+	/**
+	 * Serializes the task.
+	 *
+	 * @param out the object output stream
+	 * @throws IOException if I/O errors occur
+	 */
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		out.writeObject(finish);
+		out.writeInt(parent);
+		out.writeObject(f);
 	}
 }

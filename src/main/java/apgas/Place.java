@@ -35,8 +35,8 @@ public class Place implements Serializable, Comparable<Place> {
 	}
 
 	@Override
-	public String toString() {
-		return "place(" + id + ")";
+	public int compareTo(Place o) {
+		return Integer.compare(id, o.id);
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public class Place implements Serializable, Comparable<Place> {
 	}
 
 	@Override
-	public int compareTo(Place o) {
-		return Integer.compare(id, o.id);
+	public String toString() {
+		return "place(" + id + ")";
 	}
 }

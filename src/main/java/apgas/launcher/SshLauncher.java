@@ -28,7 +28,7 @@ public class SshLauncher extends RemoteLauncher {
 		}
 		try {
 			super.process = super.processBuilder.start();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 		command.remove(0);

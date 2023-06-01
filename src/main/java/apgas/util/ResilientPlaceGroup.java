@@ -2,11 +2,12 @@ package apgas.util;
 
 import static apgas.Constructs.places;
 
-import apgas.Place;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import apgas.Place;
 
 public class ResilientPlaceGroup implements Serializable {
 
@@ -21,7 +22,8 @@ public class ResilientPlaceGroup implements Serializable {
 		array = new Place[size];
 		int id = 0;
 		for (final Place p : places()) {
-			array[id++] = p;
+			array[id] = p;
+			id++;
 			if (id == size) {
 				max = p.id;
 				return;
@@ -29,6 +31,15 @@ public class ResilientPlaceGroup implements Serializable {
 		}
 		System.err.println("[APGAS] Too few places to initialize the ResilientPlaceGroup. Aborting.");
 		System.exit(1);
+	}
+
+	public boolean contains(Place place) {
+		for (final Place element : array) {
+			if (element.id == place.id) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void fix() {
@@ -58,19 +69,6 @@ public class ResilientPlaceGroup implements Serializable {
 		return array[id];
 	}
 
-	public int size() {
-		return array.length;
-	}
-
-	public boolean contains(Place place) {
-		for (int id = 0; id < array.length; ++id) {
-			if (array[id].id == place.id) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	public int indexOf(Place place) {
 		for (int id = 0; id < array.length; ++id) {
 			if (array[id].id == place.id) {
@@ -78,5 +76,9 @@ public class ResilientPlaceGroup implements Serializable {
 			}
 		}
 		return -1;
+	}
+
+	public int size() {
+		return array.length;
 	}
 }

@@ -11,11 +11,19 @@
 
 package apgas.launcher;
 
-import apgas.impl.HostManager;
 import java.util.List;
+
+import apgas.impl.HostManager;
 
 /** The {@link Launcher} interface. */
 public interface Launcher {
+
+	/**
+	 * Checks that all the processes launched are healthy.
+	 *
+	 * @return true if all subprocesses are healthy
+	 */
+	boolean healthy();
 
 	/**
 	 * Launches n processes with the given command line and host list. The first
@@ -32,11 +40,4 @@ public interface Launcher {
 
 	/** Shuts down the {@link Launcher} instance. */
 	void shutdown();
-
-	/**
-	 * Checks that all the processes launched are healthy.
-	 *
-	 * @return true if all subprocesses are healthy
-	 */
-	boolean healthy();
 }

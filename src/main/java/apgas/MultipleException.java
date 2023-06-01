@@ -26,19 +26,6 @@ public class MultipleException extends RuntimeException {
 	private static final long serialVersionUID = 5931977184541245168L;
 
 	/**
-	 * Constructs a new {@link MultipleException} from the specified
-	 * {@code exceptions}.
-	 *
-	 * @param exceptions the uncaught exceptions that contributed to this
-	 *                   {@code MultipleException}
-	 */
-	MultipleException(Collection<Throwable> exceptions) {
-		for (final Throwable t : exceptions) {
-			addSuppressed(t);
-		}
-	}
-
-	/**
 	 * Makes a new {@link MultipleException} from the specified {@code exceptions}
 	 * with a type reflecting the contained dead place exceptions.
 	 *
@@ -55,5 +42,18 @@ public class MultipleException extends RuntimeException {
 			}
 		}
 		return new DeadPlacesException(exceptions);
+	}
+
+	/**
+	 * Constructs a new {@link MultipleException} from the specified
+	 * {@code exceptions}.
+	 *
+	 * @param exceptions the uncaught exceptions that contributed to this
+	 *                   {@code MultipleException}
+	 */
+	MultipleException(Collection<Throwable> exceptions) {
+		for (final Throwable t : exceptions) {
+			addSuppressed(t);
+		}
 	}
 }

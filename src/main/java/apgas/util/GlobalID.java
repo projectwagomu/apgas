@@ -16,13 +16,14 @@ import static apgas.Constructs.asyncAt;
 import static apgas.Constructs.finish;
 import static apgas.Constructs.here;
 
-import apgas.DeadPlaceException;
-import apgas.Place;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import apgas.DeadPlaceException;
+import apgas.Place;
 
 /**
  * The {@link GlobalID} class provides globally unique IDs and mechanisms to
@@ -30,15 +31,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class GlobalID implements Serializable {
 
-	private static final long serialVersionUID = 5480936903198352190L;
-
-	private static final Object NULL = new Object();
-
 	/** Internal counter. */
 	private static final AtomicInteger count = new AtomicInteger();
 
 	/** Internal map. */
 	private static final Map<GlobalID, Object> map = new ConcurrentHashMap<>();
+
+	private static final Object NULL = new Object();
+
+	private static final long serialVersionUID = 5480936903198352190L;
 
 	/** The {@link Place} where this {@link GlobalID} was instantiated. */
 	public final Place home;
@@ -58,36 +59,9 @@ public class GlobalID implements Serializable {
 		lid = count.getAndIncrement();
 	}
 
-	/**
-	 * The globally unique {@code long} ID of this {@link GlobalID} instance.
-	 *
-	 * @return a globally unique ID
-	 */
-	public long gid() {
-		return (((long) home.id) << 32) + lid;
-	}
-
-	/**
-	 * Associates the given value with this {@link GlobalID} instance.
-	 *
-	 * @param value the value to associate with this global ID
-	 * @return the previous value
-	 */
-	public Object putHere(Object value) {
-		final Object result = map.put(this, value == null ? NULL : value);
-		return result == NULL ? null : result;
-	}
-
-	/**
-	 * If this {@link GlobalID} instance is not already associated with a value
-	 * associates it with the given value.
-	 *
-	 * @param value the value to associate with this global ID
-	 * @return the previous value
-	 */
-	public Object putHereIfAbsent(Object value) {
-		final Object result = map.putIfAbsent(this, value == null ? NULL : value);
-		return result == NULL ? null : result;
+	@Override
+	public boolean equals(Object that) {
+		return that instanceof GlobalID && gid() == ((GlobalID) that).gid();
 	}
 
 	/**
@@ -114,12 +88,39 @@ public class GlobalID implements Serializable {
 	}
 
 	/**
-	 * Removes the value associated with this {@link GlobalID} instance if any.
+	 * The globally unique {@code long} ID of this {@link GlobalID} instance.
 	 *
-	 * @return the removed value
+	 * @return a globally unique ID
 	 */
-	public Object removeHere() {
-		final Object result = map.remove(this);
+	public long gid() {
+		return (((long) home.id) << 32) + lid;
+	}
+
+	@Override
+	public int hashCode() {
+		return Long.hashCode(gid());
+	}
+
+	/**
+	 * Associates the given value with this {@link GlobalID} instance.
+	 *
+	 * @param value the value to associate with this global ID
+	 * @return the previous value
+	 */
+	public Object putHere(Object value) {
+		final Object result = map.put(this, value == null ? NULL : value);
+		return result == NULL ? null : result;
+	}
+
+	/**
+	 * If this {@link GlobalID} instance is not already associated with a value
+	 * associates it with the given value.
+	 *
+	 * @param value the value to associate with this global ID
+	 * @return the previous value
+	 */
+	public Object putHereIfAbsent(Object value) {
+		final Object result = map.putIfAbsent(this, value == null ? NULL : value);
 		return result == NULL ? null : result;
 	}
 
@@ -149,18 +150,18 @@ public class GlobalID implements Serializable {
 		});
 	}
 
+	/**
+	 * Removes the value associated with this {@link GlobalID} instance if any.
+	 *
+	 * @return the removed value
+	 */
+	public Object removeHere() {
+		final Object result = map.remove(this);
+		return result == NULL ? null : result;
+	}
+
 	@Override
 	public String toString() {
 		return "gid(" + gid() + ")";
-	}
-
-	@Override
-	public boolean equals(Object that) {
-		return that instanceof GlobalID && gid() == ((GlobalID) that).gid();
-	}
-
-	@Override
-	public int hashCode() {
-		return Long.hashCode(gid());
 	}
 }

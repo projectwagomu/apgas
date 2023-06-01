@@ -2,20 +2,29 @@ package apgas.util;
 
 import static apgas.Constructs.here;
 
-import apgas.SerializableCallable;
-import com.hazelcast.core.ExecutionCallback;
-import com.hazelcast.core.IMap;
-import com.hazelcast.map.EntryBackupProcessor;
-import com.hazelcast.map.EntryProcessor;
 import java.io.Serializable;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.hazelcast.core.ExecutionCallback;
+import com.hazelcast.core.IMap;
+import com.hazelcast.map.EntryBackupProcessor;
+import com.hazelcast.map.EntryProcessor;
+
+import apgas.SerializableCallable;
+
 public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements Serializable {
 
 	private static final long serialVersionUID = -2650051985799990110L;
 	private static final AtomicInteger uid = new AtomicInteger(0);
+
+	private void executeOnce(final long uid, final Entry<T, V> entry, final Runnable runnable) {
+		executeOnce(uid, entry, () -> {
+			runnable.run();
+			return null;
+		});
+	}
 
 	private Object executeOnce(final long uid, final Entry<T, V> entry, final SerializableCallable<Object> callable) {
 		V value = entry.getValue();
@@ -25,7 +34,7 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
 		Object ret = null;
 		try {
 			ret = callable.call();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		value = entry.getValue();
@@ -35,13 +44,6 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
 		}
 
 		return ret;
-	}
-
-	private void executeOnce(final long uid, final Entry<T, V> entry, final Runnable runnable) {
-		executeOnce(uid, entry, () -> {
-			runnable.run();
-			return null;
-		});
 	}
 
 	public Object executeOnKey(final IMap<T, V> map, final T key, final EntryProcessor<T, V> processor) {
@@ -54,25 +56,22 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
 
 				@Override
 				public EntryBackupProcessor<T, V> getBackupProcessor() {
-					if (backupProcessor != null) {
-						return (entry) -> {
-							executeOnce(uid, entry, () -> {
-								backupProcessor.processBackup(entry);
-							});
-						};
-					} else {
+					if (backupProcessor == null) {
 						return null;
 					}
+					return entry -> {
+						executeOnce(uid, entry, () -> {
+							backupProcessor.processBackup(entry);
+						});
+					};
 				}
 
 				@Override
 				public Object process(Entry<T, V> entry) {
-					return executeOnce(uid, entry, () -> {
-						return processor.process(entry);
-					});
+					return executeOnce(uid, entry, () -> processor.process(entry));
 				}
 			});
-		} catch (Throwable t) {
+		} catch (final Throwable t) {
 			System.out.println("EOE Throwable " + t);
 			t.printStackTrace(System.out);
 		}
@@ -87,22 +86,19 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
 
 			@Override
 			public EntryBackupProcessor<T, V> getBackupProcessor() {
-				if (backupProcessor != null) {
-					return (entry) -> {
-						executeOnce(uid, entry, () -> {
-							backupProcessor.processBackup(entry);
-						});
-					};
-				} else {
+				if (backupProcessor == null) {
 					return null;
 				}
+				return entry -> {
+					executeOnce(uid, entry, () -> {
+						backupProcessor.processBackup(entry);
+					});
+				};
 			}
 
 			@Override
 			public Object process(Entry<T, V> entry) {
-				return executeOnce(uid, entry, () -> {
-					return processor.process(entry);
-				});
+				return executeOnce(uid, entry, () -> processor.process(entry));
 			}
 		});
 	}
@@ -116,22 +112,19 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
 
 			@Override
 			public EntryBackupProcessor<T, V> getBackupProcessor() {
-				if (backupProcessor != null) {
-					return (entry) -> {
-						executeOnce(uid, entry, () -> {
-							backupProcessor.processBackup(entry);
-						});
-					};
-				} else {
+				if (backupProcessor == null) {
 					return null;
 				}
+				return entry -> {
+					executeOnce(uid, entry, () -> {
+						backupProcessor.processBackup(entry);
+					});
+				};
 			}
 
 			@Override
 			public Object process(Entry<T, V> entry) {
-				return executeOnce(uid, entry, () -> {
-					return processor.process(entry);
-				});
+				return executeOnce(uid, entry, () -> processor.process(entry));
 			}
 		}, new ExecutionCallback<T>() {
 			@Override

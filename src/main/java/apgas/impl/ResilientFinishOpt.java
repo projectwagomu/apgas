@@ -21,67 +21,26 @@ import java.util.List;
  */
 final class ResilientFinishOpt implements Serializable, Finish {
 
+	/** A factory producing {@link ResilientFinishOpt} instances. */
+	static class Factory extends Finish.Factory {
+
+		@Override
+		ResilientFinishOpt make(Finish parent) {
+			return new ResilientFinishOpt(parent);
+		}
+	}
+
 	private static final long serialVersionUID = -4266344084043843296L;
+	private transient List<Throwable> exceptions; // root exceptions
 	private final ResilientFinish finish = new ResilientFinish();
-	// for root instance
-	private final transient Finish parent; // parent finish
 	// for all instances
 	private transient int local; // local task count - 1
-	private transient List<Throwable> exceptions; // root exceptions
+
+	// for root instance
+	private final transient Finish parent; // parent finish
 
 	private ResilientFinishOpt(Finish parent) {
 		this.parent = parent;
-	}
-
-	private void init() {
-		synchronized (finish) {
-			if (finish.id != null) {
-				return; // already initialized
-			}
-			if (parent instanceof ResilientFinishOpt) {
-				((ResilientFinishOpt) parent).init(); // initializes parents first
-			}
-			finish.init(parent); // initializes resilient state
-		}
-	}
-
-	@Override
-	public void submit(int p) {
-		finish.submit(p); // no op if p == here
-	}
-
-	@Override
-	public void spawn(int p) {
-		final int here = GlobalRuntimeImpl.getRuntime().here;
-		if (p == here) {
-			synchronized (this) {
-				local++; // increment per-instance local task count
-			}
-			return;
-		}
-		init(); // initialize resilient state if needed
-		finish.spawn(p); // update resilient state
-	}
-
-	@Override
-	public void unspawn(int p) {
-		finish.unspawn(p); // must be remote
-	}
-
-	@Override
-	public void tell() {
-		synchronized (this) {
-			if (--local >= 0) {
-				return; // not done with local subtasks of this finish instance
-			}
-			notifyAll(); // unblock
-		}
-		synchronized (finish) {
-			if (finish.id == null) {
-				return; // not resilient
-			}
-		}
-		finish.tell(); // update resilient state
 	}
 
 	@Override
@@ -97,21 +56,6 @@ final class ResilientFinishOpt implements Serializable, Finish {
 			return;
 		}
 		finish.addSuppressed(exception); // add exception to resilient state
-	}
-
-	@Override
-	public boolean isReleasable() {
-		synchronized (this) {
-			if (local >= 0) {
-				return false; // not done with local subtasks of this finish instance
-			}
-		}
-		synchronized (finish) {
-			if (finish.id == null) {
-				return true; // not resilient, we are done
-			}
-		}
-		return finish.isReleasable(); // check resilient state
 	}
 
 	@Override
@@ -152,12 +96,69 @@ final class ResilientFinishOpt implements Serializable, Finish {
 		return exceptions;
 	}
 
-	/** A factory producing {@link ResilientFinishOpt} instances. */
-	static class Factory extends Finish.Factory {
-
-		@Override
-		ResilientFinishOpt make(Finish parent) {
-			return new ResilientFinishOpt(parent);
+	private void init() {
+		synchronized (finish) {
+			if (finish.id != null) {
+				return; // already initialized
+			}
+			if (parent instanceof ResilientFinishOpt) {
+				((ResilientFinishOpt) parent).init(); // initializes parents first
+			}
+			finish.init(parent); // initializes resilient state
 		}
+	}
+
+	@Override
+	public boolean isReleasable() {
+		synchronized (this) {
+			if (local >= 0) {
+				return false; // not done with local subtasks of this finish instance
+			}
+		}
+		synchronized (finish) {
+			if (finish.id == null) {
+				return true; // not resilient, we are done
+			}
+		}
+		return finish.isReleasable(); // check resilient state
+	}
+
+	@Override
+	public void spawn(int p) {
+		final int here = GlobalRuntimeImpl.getRuntime().here;
+		if (p == here) {
+			synchronized (this) {
+				local++; // increment per-instance local task count
+			}
+			return;
+		}
+		init(); // initialize resilient state if needed
+		finish.spawn(p); // update resilient state
+	}
+
+	@Override
+	public void submit(int p) {
+		finish.submit(p); // no op if p == here
+	}
+
+	@Override
+	public void tell() {
+		synchronized (this) {
+			if (--local >= 0) {
+				return; // not done with local subtasks of this finish instance
+			}
+			notifyAll(); // unblock
+		}
+		synchronized (finish) {
+			if (finish.id == null) {
+				return; // not resilient
+			}
+		}
+		finish.tell(); // update resilient state
+	}
+
+	@Override
+	public void unspawn(int p) {
+		finish.unspawn(p); // must be remote
 	}
 }

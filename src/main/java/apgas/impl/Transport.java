@@ -11,10 +11,13 @@
 
 package apgas.impl;
 
-import apgas.Configuration;
-import apgas.DeadPlaceException;
-import apgas.Place;
-import apgas.util.BadPlaceException;
+import java.lang.management.ManagementFactory;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.hazelcast.config.Config;
 import com.hazelcast.config.InMemoryFormat;
 import com.hazelcast.config.JoinConfig;
@@ -30,12 +33,11 @@ import com.hazelcast.core.InitialMembershipListener;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
-import java.lang.management.ManagementFactory;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
+import apgas.Configuration;
+import apgas.DeadPlaceException;
+import apgas.Place;
+import apgas.util.BadPlaceException;
 
 /**
  * The {@link Transport} class manages the Hazelcast cluster and implements
@@ -44,28 +46,28 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Transport implements InitialMembershipListener {
 
 	private static final String APGAS = "apgas";
-	private static final String APGAS_PLACES = "apgas:places";
 	private static final String APGAS_EXECUTOR = "apgas:executor";
 	private static final String APGAS_FINISH = "apgas:finish";
 	private static final String APGAS_PLACE_ID = "apgas:place:id";
-	/** The current members indexed by place ID. */
-	private final Map<Integer, Member> mapPlaceIDtoMember = new ConcurrentHashMap<>();
-	/** The global runtime instance to notify of new and dead places. */
-	private final GlobalRuntimeImpl runtime;
+	private static final String APGAS_PLACES = "apgas:places";
 	/** Hazelcast config */
 	private final Config config;
+	/** Executor service for sending active messages. */
+	private IExecutorService executor;
 	/** The Hazelcast instance for this JVM. */
 	HazelcastInstance hazelcast;
 	/** The place ID for this JVM. */
 	private final int here;
-	/** The local member. */
-	private Member me;
-	/** Executor service for sending active messages. */
-	private IExecutorService executor;
+	/** The current members indexed by place ID. */
+	private final Map<Integer, Member> mapPlaceIDtoMember = new ConcurrentHashMap<>();
 	/** The first unused place ID. */
 	private int maxPlace;
+	/** The local member. */
+	private Member me;
 	/** Registration ID. */
 	private String regMembershipListener;
+	/** The global runtime instance to notify of new and dead places. */
+	private final GlobalRuntimeImpl runtime;
 
 	/**
 	 * Initializes the {@link HazelcastInstance} for this global runtime instance.
@@ -86,11 +88,11 @@ public class Transport implements InitialMembershipListener {
 		config.setProperty("hazelcast.wait.seconds.before.join", "0");
 		config.setProperty("hazelcast.socket.connect.timeout.seconds", "1");
 
-		config.setProperty("hazelcast.partition.count", String.valueOf(Configuration.APGAS_PLACES.get()));
+		config.setProperty("hazelcast.partition.count", String.valueOf(Configuration.CONFIG_APGAS_PLACES.get()));
 
-		NetworkConfig networkConfig = config.getNetworkConfig();
+		final NetworkConfig networkConfig = config.getNetworkConfig();
 
-		String networkInterface = Configuration.APGAS_NETWORK_INTERFACE.get();
+		final String networkInterface = Configuration.CONFIG_APGAS_NETWORK_INTERFACE.get();
 		if (networkInterface != null && networkInterface.length() > 0) {
 			System.err.println("[APGAS] sets network interface to " + networkInterface);
 			networkConfig.getInterfaces().setEnabled(true).addInterface(networkInterface);
@@ -114,25 +116,31 @@ public class Transport implements InitialMembershipListener {
 	}
 
 	/**
-	 * Start the Hazelcast library to establish connection with the other processes in the runtime
+	 * adds a new Member from Hazelcast as Place to the local PlaceMap
+	 *
+	 * @param member The Member of Hazelcast to add as Place to the Transport
 	 */
-	public void startHazelcast() {
-		try {
-			hazelcast = Hazelcast.newHazelcastInstance(config);
-			me = hazelcast.getCluster().getLocalMember();
-
-			executor = hazelcast.getExecutorService(APGAS_EXECUTOR);
-		} catch (Throwable t) {
-			System.err.println(
-					"[APGAS] startHazelcast: " + ManagementFactory.getRuntimeMXBean().getName() + " throws Exception");
-			t.printStackTrace();
+	private void addPlace(Member member) {
+		final Integer placeID = member.getIntAttribute(APGAS_PLACE_ID);
+		if (mapPlaceIDtoMember.containsKey(placeID)) {
+			System.err.println("[APGAS] a new place was added but ID is already in use: " + placeID);
+			throw new BadPlaceException();
 		}
+		maxPlace = Math.max(maxPlace, placeID + 1);
+		mapPlaceIDtoMember.put(placeID, member);
+		final List<Integer> added = new ArrayList<>();
+		added.add(placeID);
+		runtime.updatePlaces(added, new ArrayList<>());
 	}
 
-	/** Starts monitoring cluster membership events. */
-	protected synchronized void start() {
-		// regItemListener = allMembers.addItemListener(this, false);
-		regMembershipListener = hazelcast.getCluster().addMembershipListener(this);
+	/**
+	 * Returns the socket address of this Hazelcast instance.
+	 *
+	 * @return an address in the form "ip:port"
+	 */
+	protected String getAddress() {
+		final InetSocketAddress address = me.getSocketAddress();
+		return address.getAddress().getHostAddress() + ":" + address.getPort();
 	}
 
 	/**
@@ -148,6 +156,15 @@ public class Transport implements InitialMembershipListener {
 	}
 
 	/**
+	 * Provides a map from integers to member objects
+	 *
+	 * @return map
+	 */
+	public Map<Integer, Member> getMembers() {
+		return mapPlaceIDtoMember;
+	}
+
+	/**
 	 * Returns the distributed map instance implementing resilient finish.
 	 *
 	 * @param <K> key type
@@ -159,19 +176,17 @@ public class Transport implements InitialMembershipListener {
 	}
 
 	/**
-	 * Returns the socket address of this Hazelcast instance.
+	 * Returns the current place ID.
 	 *
-	 * @return an address in the form "ip:port"
+	 * @return the place ID of this Hazelcast instance
 	 */
-	protected String getAddress() {
-		final InetSocketAddress address = me.getSocketAddress();
-		return address.getAddress().getHostAddress() + ":" + address.getPort();
+	protected int here() {
+		return here;
 	}
 
-	/** Shuts down this Hazelcast instance. */
-	protected synchronized void shutdown() {
-		hazelcast.getCluster().removeMembershipListener(regMembershipListener);
-		hazelcast.shutdown();
+	@Override
+	public synchronized void init(InitialMembershipEvent event) {
+		event.getMembers().forEach(this::addPlace);
 	}
 
 	/**
@@ -183,13 +198,41 @@ public class Transport implements InitialMembershipListener {
 		return maxPlace;
 	}
 
+	@Override
+	public synchronized void memberAdded(MembershipEvent membershipEvent) {
+		addPlace(membershipEvent.getMember());
+	}
+
+	@Override
+	public synchronized void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
+		addPlace(memberAttributeEvent.getMember());
+	}
+
+	@Override
+	public synchronized void memberRemoved(MembershipEvent membershipEvent) {
+		this.removePlace(membershipEvent.getMember());
+	}
+
 	/**
-	 * Returns the current place ID.
+	 * Removes the place with the specified id from the distributed runtime.
 	 *
-	 * @return the place ID of this Hazelcast instance
+	 * @param placeID the id of the place to remove
 	 */
-	protected int here() {
-		return here;
+	public void removePlace(int placeID) {
+		mapPlaceIDtoMember.remove(placeID);
+		final List<Integer> removed = new ArrayList<>();
+		removed.add(placeID);
+		runtime.updatePlaces(new ArrayList<>(), removed);
+	}
+
+	/**
+	 * Method used to remove a member of the cluster from the transport layer
+	 *
+	 * @param member the member to remove
+	 */
+	public void removePlace(Member member) {
+		final Integer placeID = member.getIntAttribute(APGAS_PLACE_ID);
+		removePlace(placeID);
 	}
 
 	/**
@@ -223,76 +266,40 @@ public class Transport implements InitialMembershipListener {
 		if (member == null) {
 			System.out.println("[APGAS] Exception: cannot send to member " + member);
 			throw new DeadPlaceException(new Place(Integer.MIN_VALUE));
-		} else if (member.equals(me)) {
+		}
+		if (member.equals(me)) {
 			f.run();
 		} else {
 			executor.executeOnMember(f, member);
 		}
 	}
 
+	/** Shuts down this Hazelcast instance. */
+	protected synchronized void shutdown() {
+		hazelcast.getCluster().removeMembershipListener(regMembershipListener);
+		hazelcast.shutdown();
+	}
+
+	/** Starts monitoring cluster membership events. */
+	protected synchronized void start() {
+		// regItemListener = allMembers.addItemListener(this, false);
+		regMembershipListener = hazelcast.getCluster().addMembershipListener(this);
+	}
+
 	/**
-	 * adds a new Member from Hazelcast as Place to the local PlaceMap
-	 *
-	 * @param member The Member of Hazelcast to add as Place to the Transport
+	 * Start the Hazelcast library to establish connection with the other processes
+	 * in the runtime
 	 */
-	private void addPlace(Member member) {
-		Integer placeID = member.getIntAttribute(APGAS_PLACE_ID);
-		if (this.mapPlaceIDtoMember.containsKey(placeID)) {
-			System.err.println("[APGAS] a new place was added but ID is already in use: " + placeID);
-			throw new BadPlaceException();
+	public void startHazelcast() {
+		try {
+			hazelcast = Hazelcast.newHazelcastInstance(config);
+			me = hazelcast.getCluster().getLocalMember();
+
+			executor = hazelcast.getExecutorService(APGAS_EXECUTOR);
+		} catch (final Throwable t) {
+			System.err.println(
+					"[APGAS] startHazelcast: " + ManagementFactory.getRuntimeMXBean().getName() + " throws Exception");
+			t.printStackTrace();
 		}
-		this.maxPlace = Math.max(maxPlace, placeID + 1);
-		this.mapPlaceIDtoMember.put(placeID, member);
-		List<Integer> added = new ArrayList<>();
-		added.add(placeID);
-		runtime.updatePlaces(added, new ArrayList<>());
-	}
-
-	/**
-	 * Method used to remove a member of the cluster from the transport layer
-	 * @param member the member to remove
-	 */
-	public void removePlace(Member member) {
-		Integer placeID = member.getIntAttribute(APGAS_PLACE_ID);
-		removePlace(placeID);
-	}
-
-	/**
-	 * Removes the place with the specified id from the distributed runtime.
-	 * @param placeID the id of the place to remove
-	 */
-	public void removePlace(int placeID) {
-		this.mapPlaceIDtoMember.remove(placeID);
-		List<Integer> removed = new ArrayList<>();
-		removed.add(placeID);
-		runtime.updatePlaces(new ArrayList<>(), removed);
-	}
-
-	@Override
-	public synchronized void init(InitialMembershipEvent event) {
-		event.getMembers().forEach(this::addPlace);
-	}
-
-	@Override
-	public synchronized void memberAdded(MembershipEvent membershipEvent) {
-		this.addPlace(membershipEvent.getMember());
-	}
-
-	@Override
-	public synchronized void memberRemoved(MembershipEvent membershipEvent) {
-		this.removePlace(membershipEvent.getMember());
-	}
-
-	@Override
-	public synchronized void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
-		this.addPlace(memberAttributeEvent.getMember());
-	}
-
-	/** Provides a map from integers to member objects
-	 *
-	 * @return map
-	 */
-	public Map<Integer, Member> getMembers() {
-		return mapPlaceIDtoMember;
 	}
 }

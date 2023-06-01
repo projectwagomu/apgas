@@ -29,20 +29,20 @@ final class SerializableThrowable implements Serializable {
 		this.t = t;
 	}
 
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+		t = (Throwable) in.readObject();
+		try {
+			t = (Throwable) in.readObject();
+		} catch (final Throwable x) {
+		}
+	}
+
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		final NotSerializableException e = new NotSerializableException(t.getClass().getCanonicalName());
 		e.setStackTrace(t.getStackTrace());
 		out.writeObject(e);
 		try {
 			out.writeObject(t);
-		} catch (final Throwable x) {
-		}
-	}
-
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		t = (Throwable) in.readObject();
-		try {
-			t = (Throwable) in.readObject();
 		} catch (final Throwable x) {
 		}
 	}

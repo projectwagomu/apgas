@@ -11,9 +11,10 @@
 
 package apgas.impl;
 
-import com.hazelcast.core.Member;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+
+import com.hazelcast.core.Member;
 
 /**
  * The {@link ImmediateTask} class represents an immediate task.
@@ -24,10 +25,10 @@ import java.io.ObjectInputStream;
  */
 final class ImmediateTask implements SerializableRunnable {
 
-	private static final long serialVersionUID = -7419887249105833691L;
-
 	private static final SerializableRunnable NULL = () -> {
 	};
+
+	private static final long serialVersionUID = -7419887249105833691L;
 	/** The function to run. */
 	private SerializableRunnable f;
 
@@ -38,12 +39,6 @@ final class ImmediateTask implements SerializableRunnable {
 	 */
 	ImmediateTask(SerializableRunnable f) {
 		this.f = f;
-	}
-
-	/** Submits the task for asynchronous execution. */
-	@Override
-	public void run() {
-		GlobalRuntimeImpl.getRuntime().executeImmediate(this.f);
 	}
 
 	/**
@@ -100,5 +95,11 @@ final class ImmediateTask implements SerializableRunnable {
 					+ GlobalRuntimeImpl.getRuntime().here + " due to: " + e);
 			f = NULL;
 		}
+	}
+
+	/** Submits the task for asynchronous execution. */
+	@Override
+	public void run() {
+		GlobalRuntimeImpl.getRuntime().executeImmediate(f);
 	}
 }

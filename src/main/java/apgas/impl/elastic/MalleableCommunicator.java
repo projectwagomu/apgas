@@ -1,7 +1,7 @@
 package apgas.impl.elastic;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import apgas.Constructs;
 import apgas.Place;
@@ -12,67 +12,38 @@ import apgas.impl.GlobalRuntimeImpl;
  * on the APGAS runtime. This class serves as the recipient for malleable
  * requests coming from the scheduler and the sender for evolving requests
  * coming from running programs.
- * 
+ *
  * @author Patrick Finnerty
  */
 public abstract class MalleableCommunicator {
 
 	/**
-	 * Method called when the running program moves into a state where it is capable
-	 * of changing its number of running hosts and as a result may receive orders
-	 * from the scheduler.
-	 * @throws Exception if thrown by the underlying implementation
+	 * Informs the scheduler that the hosts given as argument were released
+	 *
+	 * @param placesReleased places released following a shrink order
 	 */
-	public abstract void start() throws Exception;
-
-	/**
-	 * Method called when the running program is about to terminate. This method
-	 * gives the opportunity to the communicator to shutdown cleanly.
-	 */
-	public abstract void stop();
-
-	/**
-	 * Method to call by the extending class when a shrink order is received from
-	 * the scheduler.
-	 * 
-	 * @param nbPlacesToFree number of places to release
-	 */
-	@SuppressWarnings("unchecked")
-	final protected void malleableShrink(int nbPlacesToFree) {
-		// Perform the user-defined pre-shrink tasks
-		List<Place> toRelease = GlobalRuntimeImpl.getRuntime().malleableHandler.preShrink(nbPlacesToFree);
-
-		// Obtain the hostnames of the places to release and shutdown these places
-		List<String> hosts = GlobalRuntimeImpl.getRuntime().shutdownMallPlacesBlocking(toRelease);
-
-		// Inform the scheduler of the released hosts
-		hostReleased(hosts);
-
-		// Inform the running program of the end of the operation
-		List<Place> places = (List<Place>) Constructs.places();
-		GlobalRuntimeImpl.getRuntime().malleableHandler.postShrink(places.size(), toRelease);
-	}
+	abstract protected void hostReleased(List<String> hosts);
 
 	/**
 	 * Method to call by the extending class when a grow order is received from the
 	 * scheduler.
-	 * 
+	 *
 	 * @param nbPlacesToGrow number of places to grow by
 	 * @param hosts          hosts to use to spawn new places
 	 */
 	final protected void malleableGrow(int nbPlacesToGrow, List<String> hosts) {
 		// Perform the user-defined pre-grow tasks
-		GlobalRuntimeImpl impl = GlobalRuntimeImpl.getRuntime();
+		final GlobalRuntimeImpl impl = GlobalRuntimeImpl.getRuntime();
 		impl.malleableHandler.preGrow(nbPlacesToGrow);
-		List<? extends Place> oldPlaces = Constructs.places();
+		final List<? extends Place> oldPlaces = Constructs.places();
 
 		// Grow
 		impl.startMallPlacesBlocking(nbPlacesToGrow, hosts);
 
 		// Check what the new places are
-		List<? extends Place> nowPlaces = Constructs.places();
-		ArrayList<Place> newPlaces = new ArrayList<>();
-		for (Place p : nowPlaces) {
+		final List<? extends Place> nowPlaces = Constructs.places();
+		final ArrayList<Place> newPlaces = new ArrayList<>();
+		for (final Place p : nowPlaces) {
 			if (!oldPlaces.contains(p)) {
 				newPlaces.add(p);
 			}
@@ -83,9 +54,39 @@ public abstract class MalleableCommunicator {
 	}
 
 	/**
-	 * Informs the scheduler that the hosts given as argument were released
-	 * 
-	 * @param placesReleased places released following a shrink order
+	 * Method to call by the extending class when a shrink order is received from
+	 * the scheduler.
+	 *
+	 * @param nbPlacesToFree number of places to release
 	 */
-	abstract protected void hostReleased(List<String> hosts);
+	@SuppressWarnings("unchecked")
+	final protected void malleableShrink(int nbPlacesToFree) {
+		// Perform the user-defined pre-shrink tasks
+		final List<Place> toRelease = GlobalRuntimeImpl.getRuntime().malleableHandler.preShrink(nbPlacesToFree);
+
+		// Obtain the hostnames of the places to release and shutdown these places
+		final List<String> hosts = GlobalRuntimeImpl.getRuntime().shutdownMallPlacesBlocking(toRelease);
+
+		// Inform the scheduler of the released hosts
+		hostReleased(hosts);
+
+		// Inform the running program of the end of the operation
+		final List<Place> places = (List<Place>) Constructs.places();
+		GlobalRuntimeImpl.getRuntime().malleableHandler.postShrink(places.size(), toRelease);
+	}
+
+	/**
+	 * Method called when the running program moves into a state where it is capable
+	 * of changing its number of running hosts and as a result may receive orders
+	 * from the scheduler.
+	 *
+	 * @throws Exception if thrown by the underlying implementation
+	 */
+	public abstract void start() throws Exception;
+
+	/**
+	 * Method called when the running program is about to terminate. This method
+	 * gives the opportunity to the communicator to shutdown cleanly.
+	 */
+	public abstract void stop();
 }

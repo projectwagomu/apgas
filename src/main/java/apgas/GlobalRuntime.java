@@ -11,10 +11,11 @@
 
 package apgas;
 
-import apgas.impl.GlobalRuntimeImpl;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
+import apgas.impl.GlobalRuntimeImpl;
 
 /**
  * The {@link GlobalRuntime} class provides mechanisms to initialize and shut
@@ -27,15 +28,18 @@ import java.util.function.Consumer;
  */
 public abstract class GlobalRuntime {
 
+	/** A wrapper class for implementing the singleton pattern. */
+	private static class GlobalRuntimeWrapper {
+
+		/** The {@link GlobalRuntime} instance for this place. */
+		private static final GlobalRuntimeImpl runtime = new GlobalRuntimeImpl(args);
+	}
+
 	/** The command line arguments if the main method of this class is invoked. */
 	private static String[] args;
 
 	/** Indicates if all system wide instances are ready, only used on place 0 */
 	public static AtomicInteger readyCounter;
-
-	/** Constructs a new {@link GlobalRuntime} instance. */
-	protected GlobalRuntime() {
-	}
 
 	/**
 	 * Returns the {@link GlobalRuntime} instance for this place.
@@ -52,11 +56,11 @@ public abstract class GlobalRuntime {
 	 * @return the GlobalRuntimeImpl instance
 	 */
 	static GlobalRuntimeImpl getRuntimeImpl() {
-		GlobalRuntimeImpl runtime = GlobalRuntimeWrapper.runtime;
-		while (runtime.ready != true) { // Wait for constructor
+		final GlobalRuntimeImpl runtime = GlobalRuntimeWrapper.runtime;
+		while (!runtime.ready) { // Wait for constructor
 			try {
 				Thread.sleep(100);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 			}
 		}
 		return runtime;
@@ -72,8 +76,24 @@ public abstract class GlobalRuntime {
 		getRuntime();
 	}
 
-	/** Shuts down the {@link GlobalRuntime} instance. */
-	public abstract void shutdown();
+	/** Constructs a new {@link GlobalRuntime} instance. */
+	protected GlobalRuntime() {
+	}
+
+	/**
+	 * Returns the executor service for the place.
+	 *
+	 * @return the executor service
+	 */
+	public abstract ExecutorService getExecutorService();
+
+	/**
+	 * Returns the time of the last place failure as reported by
+	 * {@link System#nanoTime} if any or null otherwise.
+	 *
+	 * @return the time of the last place failure or null
+	 */
+	public abstract Long lastfailureTime();
 
 	/**
 	 * Registers a place failure handler.
@@ -98,25 +118,6 @@ public abstract class GlobalRuntime {
 	 */
 	public abstract void setRuntimeShutdownHandler(Runnable handler);
 
-	/**
-	 * Returns the executor service for the place.
-	 *
-	 * @return the executor service
-	 */
-	public abstract ExecutorService getExecutorService();
-
-	/**
-	 * Returns the time of the last place failure as reported by
-	 * {@link System#nanoTime} if any or null otherwise.
-	 *
-	 * @return the time of the last place failure or null
-	 */
-	public abstract Long lastfailureTime();
-
-	/** A wrapper class for implementing the singleton pattern. */
-	private static class GlobalRuntimeWrapper {
-
-		/** The {@link GlobalRuntime} instance for this place. */
-		private static final GlobalRuntimeImpl runtime = new GlobalRuntimeImpl(args);
-	}
+	/** Shuts down the {@link GlobalRuntime} instance. */
+	public abstract void shutdown();
 }

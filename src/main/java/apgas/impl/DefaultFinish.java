@@ -11,12 +11,13 @@
 
 package apgas.impl;
 
-import apgas.SerializableJob;
-import apgas.util.GlobalID;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import apgas.SerializableJob;
+import apgas.util.GlobalID;
 
 /**
  * The {@link DefaultFinish} class implements the distributed termination
@@ -50,14 +51,16 @@ import java.util.List;
  */
 final class DefaultFinish implements Serializable, Finish {
 
+	/** A factory producing {@link DefaultFinish} instances. */
+	static class Factory extends Finish.Factory {
+
+		@Override
+		DefaultFinish make(Finish parent) {
+			return new DefaultFinish();
+		}
+	}
+
 	private static final long serialVersionUID = 3789869778188598267L;
-	/**
-	 * The {@link GlobalID} instance for this finish construct.
-	 *
-	 * <p>
-	 * Null until the finish object is first serialized.
-	 */
-	GlobalID id;
 	/**
 	 * A multi-purpose task counter.
 	 *
@@ -81,6 +84,14 @@ final class DefaultFinish implements Serializable, Finish {
 	/** Uncaught exceptions collected by this finish construct. */
 	private transient List<Throwable> exceptions;
 
+	/**
+	 * The {@link GlobalID} instance for this finish construct.
+	 *
+	 * <p>
+	 * Null until the finish object is first serialized.
+	 */
+	GlobalID id;
+
 	/** Constructs a finish instance. */
 	DefaultFinish() {
 		final int here = GlobalRuntimeImpl.getRuntime().here;
@@ -88,12 +99,75 @@ final class DefaultFinish implements Serializable, Finish {
 	}
 
 	@Override
-	public synchronized void submit(int p) {
+	public synchronized void addSuppressed(Throwable exception) {
 		final int here = GlobalRuntimeImpl.getRuntime().here;
-		if (id != null && id.home.id != here) {
-			// remote finish
-			count++;
+		if (id == null || id.home.id == here) {
+			// root finish
+			if (exceptions == null) {
+				exceptions = new ArrayList<>();
+			}
+			exceptions.add(exception);
+		} else {
+			// remote finish: spawn remote task to transfer exception to root finish
+			final SerializableThrowable t = new SerializableThrowable(exception);
+			final DefaultFinish that = this;
+			spawn(id.home.id);
+			new Task(this, (SerializableJob) () -> {
+				that.addSuppressed(t.t);
+			}, here).asyncAt(id.home.id);
 		}
+	}
+
+	@Override
+	public synchronized boolean block() {
+		while (count != 0) {
+			try {
+				wait();
+			} catch (final InterruptedException e) {
+			}
+		}
+		return count == 0;
+	}
+
+	@Override
+	public synchronized List<Throwable> exceptions() {
+		return exceptions;
+	}
+
+	@Override
+	public synchronized boolean isReleasable() {
+		return count == 0;
+	}
+
+	/**
+	 * Deserializes the finish object.
+	 *
+	 * @return the finish object
+	 */
+	public Object readResolve() {
+		// count = 0;
+		DefaultFinish me = (DefaultFinish) id.putHereIfAbsent(this);
+		if (me == null) {
+			me = this;
+		}
+		synchronized (me) {
+			final int here = GlobalRuntimeImpl.getRuntime().here;
+			if (id.home.id != here && me.counts == null) {
+				me.counts = new int[GlobalRuntimeImpl.getRuntime().maxPlace()];
+			}
+			return me;
+		}
+	}
+
+	/**
+	 * Reallocates the {@link #counts} array to account for larger place counts.
+	 *
+	 * @param min a minimal size for the reallocation
+	 */
+	private void resize(int min) {
+		final int[] tmp = new int[Math.max(min, GlobalRuntimeImpl.getRuntime().maxPlace())];
+		System.arraycopy(counts, 0, tmp, 0, counts.length);
+		counts = tmp;
 	}
 
 	@Override
@@ -129,24 +203,11 @@ final class DefaultFinish implements Serializable, Finish {
 	}
 
 	@Override
-	public synchronized void unspawn(int p) {
+	public synchronized void submit(int p) {
 		final int here = GlobalRuntimeImpl.getRuntime().here;
-		if (id == null || id.home.id == here) {
-			// root finish
-			if (counts == null) {
-				// task must have been local
-				--count;
-			} else {
-				if (counts[p] == 0) {
-					count++;
-				}
-				if (--counts[p] == 0) {
-					--count;
-				}
-			}
-		} else {
+		if (id != null && id.home.id != here) {
 			// remote finish
-			--counts[p];
+			count++;
 		}
 	}
 
@@ -178,6 +239,28 @@ final class DefaultFinish implements Serializable, Finish {
 		}
 	}
 
+	@Override
+	public synchronized void unspawn(int p) {
+		final int here = GlobalRuntimeImpl.getRuntime().here;
+		if (id == null || id.home.id == here) {
+			// root finish
+			if (counts == null) {
+				// task must have been local
+				--count;
+			} else {
+				if (counts[p] == 0) {
+					count++;
+				}
+				if (--counts[p] == 0) {
+					--count;
+				}
+			}
+		} else {
+			// remote finish
+			--counts[p];
+		}
+	}
+
 	/**
 	 * Applies an update message from a remote finish to the root finish.
 	 *
@@ -201,58 +284,6 @@ final class DefaultFinish implements Serializable, Finish {
 		}
 	}
 
-	@Override
-	public synchronized void addSuppressed(Throwable exception) {
-		final int here = GlobalRuntimeImpl.getRuntime().here;
-		if (id == null || id.home.id == here) {
-			// root finish
-			if (exceptions == null) {
-				exceptions = new ArrayList<>();
-			}
-			exceptions.add(exception);
-		} else {
-			// remote finish: spawn remote task to transfer exception to root finish
-			final SerializableThrowable t = new SerializableThrowable(exception);
-			final DefaultFinish that = this;
-			spawn(id.home.id);
-			new Task(this, (SerializableJob) () -> {
-				that.addSuppressed(t.t);
-			}, here).asyncAt(id.home.id);
-		}
-	}
-
-	@Override
-	public synchronized boolean isReleasable() {
-		return count == 0;
-	}
-
-	@Override
-	public synchronized List<Throwable> exceptions() {
-		return exceptions;
-	}
-
-	@Override
-	public synchronized boolean block() {
-		while (count != 0) {
-			try {
-				wait();
-			} catch (final InterruptedException e) {
-			}
-		}
-		return count == 0;
-	}
-
-	/**
-	 * Reallocates the {@link #counts} array to account for larger place counts.
-	 *
-	 * @param min a minimal size for the reallocation
-	 */
-	private void resize(int min) {
-		final int[] tmp = new int[Math.max(min, GlobalRuntimeImpl.getRuntime().maxPlace())];
-		System.arraycopy(counts, 0, tmp, 0, counts.length);
-		counts = tmp;
-	}
-
 	/**
 	 * Prepares the finish object for serialization.
 	 *
@@ -264,34 +295,5 @@ final class DefaultFinish implements Serializable, Finish {
 			id.putHere(this);
 		}
 		return this;
-	}
-
-	/**
-	 * Deserializes the finish object.
-	 *
-	 * @return the finish object
-	 */
-	public Object readResolve() {
-		// count = 0;
-		DefaultFinish me = (DefaultFinish) id.putHereIfAbsent(this);
-		if (me == null) {
-			me = this;
-		}
-		synchronized (me) {
-			final int here = GlobalRuntimeImpl.getRuntime().here;
-			if (id.home.id != here && me.counts == null) {
-				me.counts = new int[GlobalRuntimeImpl.getRuntime().maxPlace()];
-			}
-			return me;
-		}
-	}
-
-	/** A factory producing {@link DefaultFinish} instances. */
-	static class Factory extends Finish.Factory {
-
-		@Override
-		DefaultFinish make(Finish parent) {
-			return new DefaultFinish();
-		}
 	}
 }

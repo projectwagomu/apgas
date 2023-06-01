@@ -13,13 +13,14 @@ package apgas.util;
 
 import static apgas.Constructs.finish;
 
+import java.io.ObjectStreamException;
+import java.io.Serializable;
+import java.util.Collection;
+
 import apgas.Constructs;
 import apgas.DeadPlaceException;
 import apgas.Place;
 import apgas.SerializableCallable;
-import java.io.ObjectStreamException;
-import java.io.Serializable;
-import java.util.Collection;
 
 /**
  * A {@link PlaceLocalObject} instance maintains an implicit map from places to
@@ -33,8 +34,30 @@ import java.util.Collection;
  */
 public class PlaceLocalObject implements Serializable {
 
-	/** The {@link GlobalID} of this {@link PlaceLocalObject} instance. */
-	public GlobalID id; // package private
+	private static final class ObjectReference implements Serializable {
+
+		private static final long serialVersionUID = -2416972795695833335L;
+
+		private final GlobalID id;
+
+		private ObjectReference(GlobalID id) {
+			this.id = id;
+		}
+
+		private Object readResolve() throws ObjectStreamException {
+			return id.getHere();
+		}
+	}
+
+	/**
+	 * Returns the {@link GlobalID} of the given {@link PlaceLocalObject} instance.
+	 *
+	 * @param object a place local object
+	 * @return the global ID of this object
+	 */
+	public static GlobalID getId(PlaceLocalObject object) {
+		return object.id;
+	}
 
 	/**
 	 * Constructs a {@link PlaceLocalObject} instance.
@@ -65,15 +88,8 @@ public class PlaceLocalObject implements Serializable {
 		return (T) idLocal.getHere();
 	}
 
-	/**
-	 * Returns the {@link GlobalID} of the given {@link PlaceLocalObject} instance.
-	 *
-	 * @param object a place local object
-	 * @return the global ID of this object
-	 */
-	public static GlobalID getId(PlaceLocalObject object) {
-		return object.id;
-	}
+	/** The {@link GlobalID} of this {@link PlaceLocalObject} instance. */
+	public GlobalID id; // package private
 
 	/**
 	 * Constructs a reference to this {@link PlaceLocalObject} instance.
@@ -83,20 +99,5 @@ public class PlaceLocalObject implements Serializable {
 	 */
 	public Object writeReplace() throws ObjectStreamException {
 		return new ObjectReference(id);
-	}
-
-	private static final class ObjectReference implements Serializable {
-
-		private static final long serialVersionUID = -2416972795695833335L;
-
-		private final GlobalID id;
-
-		private ObjectReference(GlobalID id) {
-			this.id = id;
-		}
-
-		private Object readResolve() throws ObjectStreamException {
-			return id.getHere();
-		}
 	}
 }

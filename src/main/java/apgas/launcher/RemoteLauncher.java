@@ -11,27 +11,22 @@
 
 package apgas.launcher;
 
-import apgas.Configuration;
-import apgas.Place;
-import apgas.impl.HostManager;
-import apgas.impl.HostManager.Host;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import apgas.Configuration;
+import apgas.Place;
+import apgas.impl.HostManager;
+import apgas.impl.HostManager.Host;
+
 /**
  * The {@link RemoteLauncher} abstract class needs to be extended by specified
  * remote launchers (eg ssh, srun).
  */
 public abstract class RemoteLauncher implements Launcher {
-
-	/** This method must be implemented. */
-	abstract void startRemote(List<String> command, boolean verbose, String hostAddress);
-
-	/** The processes we spawned. */
-	private final List<Process> processes = new ArrayList<>();
 
 	/**
 	 * Status of the shutdown sequence (0 live, 1 shutting down the Global Runtime,
@@ -40,30 +35,49 @@ public abstract class RemoteLauncher implements Launcher {
 	private int dying;
 
 	protected Process process;
+
 	ProcessBuilder processBuilder;
+
+	/** The processes we spawned. */
+	private final List<Process> processes = new ArrayList<>();
 
 	/** Constructs a new {@link RemoteLauncher} instance. */
 	RemoteLauncher() {
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> terminate()));
+		Runtime.getRuntime().addShutdownHook(new Thread(this::terminate));
+	}
+
+	@Override
+	public boolean healthy() {
+		synchronized (this) {
+			if (dying > 0) {
+				return false;
+			}
+		}
+		for (final Process process : processes) {
+			if (!process.isAlive()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
 	public List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception {
 
-		List<String> command = hostManager.getCopyOfLaunchCommand();
+		final List<String> command = hostManager.getCopyOfLaunchCommand();
 
 		final String remove = command.remove(command.size() - 1);
 
-		this.processBuilder = new ProcessBuilder(command);
-		this.processBuilder.redirectOutput(Redirect.INHERIT);
-		this.processBuilder.redirectError(Redirect.INHERIT);
+		processBuilder = new ProcessBuilder(command);
+		processBuilder.redirectOutput(Redirect.INHERIT);
+		processBuilder.redirectError(Redirect.INHERIT);
 		String hostAddress = null;
 
-		List<Integer> newPlaceIDs = hostManager.generateNewPlaceIds(n);
+		final List<Integer> newPlaceIDs = hostManager.generateNewPlaceIds(n);
 
-		for (int newPlaceID : newPlaceIDs) {
+		for (final int newPlaceID : newPlaceIDs) {
 
-			Host host = hostManager.getNextHost();
+			final Host host = hostManager.getNextHost();
 			if (host == null) {
 				System.err.println("[APGAS] Warning: no valid host found; repeating last host: " + host);
 			} else {
@@ -71,7 +85,7 @@ public abstract class RemoteLauncher implements Launcher {
 			}
 			host.attachPlace(new Place(newPlaceID));
 
-			if (true == verbose) {
+			if (verbose) {
 				System.err.println(hostManager);
 			}
 
@@ -82,11 +96,11 @@ public abstract class RemoteLauncher implements Launcher {
 				e.printStackTrace();
 			}
 
-			command.add("-D" + Configuration.APGAS_PLACE_ID.getName() + "=" + newPlaceID);
+			command.add("-D" + Configuration.CONFIG_APGAS_PLACE_ID.getName() + "=" + newPlaceID);
 			command.add(remove);
 
 			if (local) {
-				this.process = this.processBuilder.start();
+				process = processBuilder.start();
 				if (verbose) {
 					System.err.println("[APGAS] Spawning new place: " + String.join(" ", command));
 				}
@@ -118,6 +132,9 @@ public abstract class RemoteLauncher implements Launcher {
 		}
 	}
 
+	/** This method must be implemented. */
+	abstract void startRemote(List<String> command, boolean verbose, String hostAddress);
+
 	/** Kills all spawned processes. */
 	private void terminate() {
 		synchronized (this) {
@@ -126,20 +143,5 @@ public abstract class RemoteLauncher implements Launcher {
 		for (final Process process : processes) {
 			process.destroyForcibly();
 		}
-	}
-
-	@Override
-	public boolean healthy() {
-		synchronized (this) {
-			if (dying > 0) {
-				return false;
-			}
-		}
-		for (final Process process : processes) {
-			if (!process.isAlive()) {
-				return false;
-			}
-		}
-		return true;
 	}
 }
