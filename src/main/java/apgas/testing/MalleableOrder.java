@@ -8,7 +8,7 @@ import java.net.Socket;
 import apgas.impl.elastic.SocketMalleableCommunicator;
 
 /**
- * Simple main used to send malleable shrink/expand orders to a running
+ * Simple main used to send malleable shrink/grow orders to a running
  * malleable APGAS program using the {@link SocketMalleableCommunicator} as the
  * communicator
  *

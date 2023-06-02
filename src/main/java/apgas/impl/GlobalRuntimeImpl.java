@@ -803,7 +803,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			}
 			dying = true;
 		}
-		// Shutdown was decided. Before anything else, we stop receiving expand/shrink
+		// Shutdown was decided. Before anything else, we stop receiving grow/shrink
 		// orders from the scheduler (if running in malleable mode)
 		if (malleableCommunicator != null) {
 			malleableCommunicator.stop();

@@ -27,7 +27,7 @@ MAINPRGM= java -cp "../target/*" \
      apgas.testing.DummyApplication 30 &
 
 sleep 10
-java -cp "../target/*" apgas.testing.MalleableOrder expand 2 $HOSTNAME $HOSTNAME
+java -cp "../target/*" apgas.testing.MalleableOrder grow 2 $HOSTNAME $HOSTNAME
 sleep 10
 java -cp "../target/*" apgas.testing.MalleableOrder shrink 1
 

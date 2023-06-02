@@ -127,7 +127,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 				final int change = Integer.parseInt(str[1]);
 				if (order.equals("shrink")) {
 					super.malleableShrink(change);
-				} else if (order.equals("expand")) {
+				} else if (order.equals("grow")) {
 					final List<String> hostnames = new ArrayList<>();
 					for (int i = 0; i < change; i++) {
 						hostnames.add(str[i + 2]);
@@ -135,7 +135,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 					super.malleableGrow(change, hostnames);
 				} else {
 					System.err.println(
-							"Received unexpected order " + str[0] + ", expected <shrink> or <expand>. Ignoring ...");
+							"Received unexpected order " + str[0] + ", expected <shrink> or <grow>. Ignoring ...");
 				}
 			} catch (final IOException e) {
 				System.err.println("IO error while reading content from the socket");
