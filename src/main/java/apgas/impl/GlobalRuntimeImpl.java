@@ -136,7 +136,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	final int initialPlaces;
 	/** Flag that indicates that this Place is the Master */
 	private final boolean isMaster;
-	boolean isSocetInit = false;
 	/** The launcher used to spawn additional places. */
 	private Launcher launcher;
 	/** Address of this host */
@@ -171,7 +170,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	int timeoutStarting = 500;
 
 	/** The transport for this global runtime instance. */
-	protected final Transport transport;
+	final Transport transport;
 
 	/** Verbose of the Launcher */
 	final boolean verboseLauncher;
@@ -478,8 +477,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
 	/**
 	 * initializes the Launcher to start new Places with.
-	 *
-	 * @throws Exception if the Launcher could not be created.
 	 */
 	private void initializeLauncher() {
 		final String launcherName = Configuration.CONFIG_APGAS_LAUNCHER.get();
@@ -940,9 +937,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 
 		synchronized (MALLEABILITY_SYNC) {
-			GlobalRuntime.readyCounter.addAndGet(n); // useless an dieser Stelle, nur kosmetische Gruende
-			try {
-				final ExecutorService executor = Executors.newSingleThreadExecutor();
+			//  not needed here, only for cosmetic
+			GlobalRuntime.readyCounter.addAndGet(n);
+			try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
 				return executor.submit(() -> launcher.launch(hostManager, n, verboseLauncher));
 			} catch (final Exception e) {
 				e.printStackTrace();
@@ -990,11 +987,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
 			if (listFuture != null) {
 				try {
-					final List<Integer> result = listFuture.get();
-					return result;
-				} catch (final InterruptedException e) {
-					e.printStackTrace();
-				} catch (final ExecutionException e) {
+					return listFuture.get();
+				} catch (final InterruptedException | ExecutionException e) {
 					e.printStackTrace();
 				}
 			}
