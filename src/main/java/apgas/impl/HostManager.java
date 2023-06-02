@@ -16,8 +16,8 @@ import apgas.util.ConsolePrinter;
 
 /**
  * This Class maintains all Hosts of the Runtime to reuse the Hosts after
- * removing some of the Places. ATM we assume, that the initial given List of
- * Hosts are reachable and usable until the end of the whole execution.
+ * removing some of the Places. ATM we assume that the initially given list of
+ * hosts are reachable and usable until the end of the whole execution.
  */
 public class HostManager {
 

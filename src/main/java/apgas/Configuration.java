@@ -163,7 +163,7 @@ public final class Configuration<T> {
 	public static final String APGAS_PORT_PROPERTY = "apgas.port";
 
 	/**
-	 * Places per Node. Needed for all Script Launcher
+	 * Places per Node
 	 *
 	 * <p>
 	 * Defaults to 0 (not working)
@@ -179,10 +179,6 @@ public final class Configuration<T> {
 	 */
 	public static final String APGAS_RESILIENT_PROPERTY = "apgas.resilient";
 
-	/**
-	 * Absolute Path for writing Scripts in Script Launcher. MUST contain "Remote"
-	 */
-	public static final String APGAS_SCRIPTNAME_PROPERTY = "apgas.scriptname";
 	/**
 	 * Property {@value #APGAS_THREADS_PROPERTY} specifies the desired level of
 	 * parallelism (Integer property).
@@ -266,17 +262,9 @@ public final class Configuration<T> {
 	public static final Configuration<Integer> CONFIG_APGAS_PORT = new Configuration<>(APGAS_PORT_PROPERTY, 5701,
 			Integer.class);
 
-	/** Configuration for property {@value #APGAS_PPERNODE_PROPERTY} */
-	public static final Configuration<Integer> CONFIG_APGAS_PPERNODE = new Configuration<>(APGAS_PPERNODE_PROPERTY,
-			Integer.class);
-
 	/** Configuration object for {@link #APGAS_RESILIENT_PROPERTY} */
 	public static final Configuration<Boolean> CONFIG_APGAS_RESILIENT = new Configuration<>(APGAS_RESILIENT_PROPERTY, false,
 			Boolean.class);
-
-	/** Configuration object for {@link #APGAS_SCRIPTNAME_PROPERTY} */
-	public static final Configuration<String> CONFIG_APGAS_SCRIPTNAME = new Configuration<>(APGAS_SCRIPTNAME_PROPERTY,
-			"RemoteDefaultScriptName", String.class);
 
 	/** Configuration object for {@link #APGAS_THREADS_PROPERTY} */
 	public static final Configuration<Integer> CONFIG_APGAS_THREADS = new Configuration<>(APGAS_THREADS_PROPERTY,
@@ -298,13 +286,11 @@ public final class Configuration<T> {
 		allConfigs.add(CONFIG_APGAS_MAX_THREADS);
 		allConfigs.add(CONFIG_APGAS_RESILIENT);
 		allConfigs.add(CONFIG_APGAS_BACKUPCOUNT);
-		allConfigs.add(CONFIG_APGAS_PPERNODE);
 		allConfigs.add(CONFIG_APGAS_MASTER);
 		allConfigs.add(CONFIG_APGAS_HOSTFILE);
 		allConfigs.add(CONFIG_APGAS_JAVA);
 		allConfigs.add(CONFIG_APGAS_VERBOSE_LAUNCHER);
 		allConfigs.add(CONFIG_APGAS_LAUNCHER);
-		allConfigs.add(CONFIG_APGAS_SCRIPTNAME);
 		allConfigs.add(CONFIG_APGAS_PLACE_ID);
 		allConfigs.add(CONFIG_APGAS_PORT);
 		allConfigs.add(CONFIG_APGAS_NETWORK_INTERFACE);
@@ -343,13 +329,11 @@ public final class Configuration<T> {
 		allConfigs.add(CONFIG_APGAS_MAX_THREADS);
 		allConfigs.add(CONFIG_APGAS_RESILIENT);
 		allConfigs.add(CONFIG_APGAS_BACKUPCOUNT);
-		allConfigs.add(CONFIG_APGAS_PPERNODE);
 		allConfigs.add(CONFIG_APGAS_MASTER);
 		allConfigs.add(CONFIG_APGAS_HOSTFILE);
 		allConfigs.add(CONFIG_APGAS_JAVA);
 		allConfigs.add(CONFIG_APGAS_VERBOSE_LAUNCHER);
 		allConfigs.add(CONFIG_APGAS_LAUNCHER);
-		allConfigs.add(CONFIG_APGAS_SCRIPTNAME);
 		allConfigs.add(CONFIG_APGAS_PLACE_ID);
 		allConfigs.add(CONFIG_APGAS_PORT);
 		allConfigs.add(CONFIG_APGAS_NETWORK_INTERFACE);
