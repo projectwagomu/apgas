@@ -892,7 +892,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			freedHosts = shutdownMallPlaces(toRelease);
 
 			// Wait on place 0 for the number of places to reach the expected level
-			// TODO handle failures with a sort of timeout?
 			waitForNewPlacesCount(expectedPlacesCount);
 
 			// Make sure all the other places are also informed of the change in the number
