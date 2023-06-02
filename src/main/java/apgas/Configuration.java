@@ -40,21 +40,22 @@ public final class Configuration<T> {
 
 	/** This Property enables and disables the consoleprinter. */
 	public static final String APGAS_CONSOLEPRINTER_PROPERTY = "apgas.consoleprinter";
+
 	/**
-	 * Possible value for configuration {@link #APGAS_ELASTIC}. This value sets the
-	 * number of places to remain fixed throughout execution.
+	 * Possible value for configuration {@link #APGAS_ELASTIC_PROPERTY}.
 	 */
 	public static final String APGAS_ELASTIC_FIXED = "fixed";
 
 	/**
-	 * Possible value for configuration {@link #APGAS_ELASTIC}. This value sets the
-	 * runtime to be malleable. A malleable communicator will be prepared by the
-	 * runtime to receive instructions from the scheduler. The programmer should
-	 * call method
+	 * Possible value for configuration {@link #APGAS_ELASTIC_PROPERTY}.
+	 * This value sets the runtime to be malleable. A malleable communicator
+	 * will be prepared by the runtime to receive instructions from the
+	 * scheduler. The programmer should call method
 	 * {@link Constructs#defineMalleableHandle(apgas.impl.elastic.MalleableHandler)}
 	 * to define the actions to perform before and after a malleable change.
 	 */
 	public static final String APGAS_ELASTIC_MALLEABLE = "malleable";
+
 	/**
 	 * This String is used to define the property setting which indicated if the
 	 * running APGAS program is elastic. Possible values are:
@@ -67,15 +68,19 @@ public final class Configuration<T> {
 	 * </ul>
 	 */
 	public static final String APGAS_ELASTIC_PROPERTY = "apgas.elastic";
+
 	/**
 	 * Property {@value #APGAS_HOSTFILE_PROPERTY} specifies a filename that lists
 	 * hosts on which to launch places (String property).
 	 */
 	public static final String APGAS_HOSTFILE_PROPERTY = "apgas.hostfile";
 	/**
-	 * This Property defines the strategy of the hostmanager: 0 : Places are added
-	 * cyclical to the nodes (default) 1 : Nodes are filled one after the other.
-	 * This can result in hosts without places
+	 * This Property defines the strategy of the hostmanager:
+	 * <ul>
+	 *  <li>0 : Places are added cyclical to the nodes (default)
+	 *  <li>1 : Nodes are filled one after the other. This can
+	 *  result in hosts without places
+	 * </ul>
 	 */
 	public static final String APGAS_HOSTMANAGER_STRATEGY_PROPERTY = "apgas.hostmanager.strategy";
 
@@ -87,6 +92,7 @@ public final class Configuration<T> {
 	 * 4 is used by default
 	 */
 	public static final String APGAS_IMMEDIATE_THREADS_PROPERTY = "apgas.immediate.threads";
+
 	/**
 	 * Specifies the java command to run for spawning places (String property).
 	 *
@@ -102,6 +108,7 @@ public final class Configuration<T> {
 	 * Defaults to "{@code apgas.launcher.SshLauncher}".
 	 */
 	public static final String APGAS_LAUNCHER_PROPERTY = "apgas.launcher";
+
 	/**
 	 * String used to define the class used as malleable communicator
 	 */
@@ -133,6 +140,7 @@ public final class Configuration<T> {
 	 * Goethe: eno1: "10.151.*.*" ib0: "10.149.*.*"
 	 */
 	public static final String APGAS_NETWORK_INTERFACE_PROPERTY = "apgas.network.interface";
+
 	/**
 	 * This Property is set by the Master or starting Place to set the id of the
 	 * Place to start, at launch time. This gives the starting Place (Master atm.)
@@ -150,6 +158,7 @@ public final class Configuration<T> {
 	 * places to appear.
 	 */
 	public static final String APGAS_PLACES_PROPERTY = "apgas.places";
+
 	/** This Property sets the Port of the Master Place. */
 	public static final String APGAS_PORT_PROPERTY = "apgas.port";
 
@@ -191,6 +200,7 @@ public final class Configuration<T> {
 	 * Defaults to "{@code false}".
 	 */
 	public static final String APGAS_VERBOSE_LAUNCHER_PROPERTY = "apgas.verbose.launcher";
+
 	/** Configuration object for {@link #APGAS_BACKUPCOUNT_PROPERTY} */
 	public static final Configuration<Integer> CONFIG_APGAS_BACKUPCOUNT = new Configuration<>(APGAS_BACKUPCOUNT_PROPERTY, 1,
 			Integer.class);
@@ -198,6 +208,7 @@ public final class Configuration<T> {
 	/** Configuration object for {@link #APGAS_CONSOLEPRINTER_PROPERTY} */
 	public static final Configuration<Boolean> CONFIG_APGAS_CONSOLEPRINTER = new Configuration<>(APGAS_CONSOLEPRINTER_PROPERTY,
 			false, Boolean.class);
+
 	/**
 	 * Property defining if the program is allowed to change the number of running
 	 * processes during execution.
@@ -208,6 +219,7 @@ public final class Configuration<T> {
 	/** Configuration object for {@link #APGAS_HOSTFILE_PROPERTY} */
 	public static final Configuration<String> CONFIG_APGAS_HOSTFILE = new Configuration<>(APGAS_HOSTFILE_PROPERTY,
 			String.class);
+
 	/** Configuration object for {@link #APGAS_HOSTMANAGER_STRATEGY_PROPERTY} */
 	public static final Configuration<Integer> CONFIG_APGAS_HOSTMANAGER_STRATEGY = new Configuration<>(
 			APGAS_HOSTMANAGER_STRATEGY_PROPERTY, 0, Integer.class);
@@ -292,6 +304,7 @@ public final class Configuration<T> {
 		allConfigs.add(CONFIG_APGAS_JAVA);
 		allConfigs.add(CONFIG_APGAS_VERBOSE_LAUNCHER);
 		allConfigs.add(CONFIG_APGAS_LAUNCHER);
+		allConfigs.add(CONFIG_APGAS_SCRIPTNAME);
 		allConfigs.add(CONFIG_APGAS_PLACE_ID);
 		allConfigs.add(CONFIG_APGAS_PORT);
 		allConfigs.add(CONFIG_APGAS_NETWORK_INTERFACE);
@@ -336,6 +349,7 @@ public final class Configuration<T> {
 		allConfigs.add(CONFIG_APGAS_JAVA);
 		allConfigs.add(CONFIG_APGAS_VERBOSE_LAUNCHER);
 		allConfigs.add(CONFIG_APGAS_LAUNCHER);
+		allConfigs.add(CONFIG_APGAS_SCRIPTNAME);
 		allConfigs.add(CONFIG_APGAS_PLACE_ID);
 		allConfigs.add(CONFIG_APGAS_PORT);
 		allConfigs.add(CONFIG_APGAS_NETWORK_INTERFACE);
@@ -390,7 +404,7 @@ public final class Configuration<T> {
 	 * retrieve the PropertyValue of the Configuration.
 	 *
 	 * <p>
-	 * This returns the default value if provided and no other Value was set or
+	 * This returns the default value if provided, and no other Value was set or
 	 * retrieved via the System-Properties. If a Value is set via the
 	 * System-Properties this will override the default Value. If a Value is set via
 	 * the setter Method, this Value will override the default Value as well as the
@@ -459,7 +473,7 @@ public final class Configuration<T> {
 	}
 
 	/**
-	 * sets the default value to use if no System-Property is present. This can be
+	 * set the default value to use if no System-Property is present. This can be
 	 * overridden by a set call.
 	 *
 	 * @param defaultValue The Value to use as default
