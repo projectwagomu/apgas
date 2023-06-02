@@ -38,7 +38,7 @@ public abstract class GlobalRuntime {
 	/** The command line arguments if the main method of this class is invoked. */
 	private static String[] args;
 
-	/** Indicates if all system wide instances are ready, only used on place 0 */
+	/** Indicates if all system-wide instances are ready, only used on place 0 */
 	public static AtomicInteger readyCounter;
 
 	/**

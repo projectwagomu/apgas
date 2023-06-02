@@ -24,7 +24,7 @@ public class MalleableOrder {
 	private static final String JOB_PORT = "job.port";
 
 	/**
-	 * This main takes different arguments depending on the on the type of order to
+	 * This main takes different arguments depending on the type of order to
 	 * sent to the running malleable program.<br>
 	 * <h4>shrink case</h4> The arguments expected are:
 	 * <ul>

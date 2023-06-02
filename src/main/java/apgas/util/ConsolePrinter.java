@@ -20,7 +20,7 @@ public class ConsolePrinter implements Serializable {
 
 	private static final ConsolePrinter instance = new ConsolePrinter();
 
-	/** Stores the state of the {@link Configuration#APGAS_CONSOLEPRINTER} */
+	/** Stores the state of the {@link Configuration#CONFIG_APGAS_CONSOLEPRINTER} */
 	private static final boolean PRINT = Configuration.CONFIG_APGAS_CONSOLEPRINTER.get();
 
 	/** Serial Version UID */
