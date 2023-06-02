@@ -41,7 +41,6 @@ public final class Task extends RecursiveAction implements SerializableRunnable 
 	/** The finish object for this {@link Task} instance. */
 	Finish finish;
 
-	/** System wide unique id of this task */
 	/** The place of the parent task. */
 	private int parent;
 

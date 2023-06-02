@@ -77,7 +77,7 @@ public class Transport implements InitialMembershipListener {
 	 * @param localhost   the preferred ip address of this host or null
 	 * @param backupCount number of backups to use for distributed data structures
 	 */
-	protected Transport(GlobalRuntimeImpl runtime, String master, String localhost, String launcherName,
+	protected Transport(GlobalRuntimeImpl runtime, String master, String localhost,
 			int backupCount, int placeId) {
 		this.runtime = runtime;
 		// config

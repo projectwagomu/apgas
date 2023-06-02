@@ -20,7 +20,7 @@ public abstract class MalleableCommunicator {
 	/**
 	 * Informs the scheduler that the hosts given as argument were released
 	 *
-	 * @param placesReleased places released following a shrink order
+	 * @param hosts released following a shrink order
 	 */
 	abstract protected void hostReleased(List<String> hosts);
 

@@ -227,7 +227,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		immediatePool = (ThreadPoolExecutor) Executors.newFixedThreadPool(Configuration.CONFIG_APGAS_IMMEDIATE_THREADS.get());
 
 		// Initialize transport
-		transport = new Transport(this, master, ip, launcherName, backupCount, placeID);
+		transport = new Transport(this, master, ip, backupCount, placeID);
 		transport.startHazelcast();
 
 		// If this is the master, launch the other processes

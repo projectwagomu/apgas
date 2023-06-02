@@ -46,12 +46,12 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 	private final int schedulerPort;
 
 	/** Socket used to receive orders from the scheduler */
-	private ServerSocket server = null;
+	private final ServerSocket server;
 
 	/**
-	 * Socket of an ongoing connection
+	 * Socket of malleable connections
 	 * <p>
-	 * This socket is kept as a member for cases where as malleable "shrink" order
+	 * This socket is kept as a member for cases whereas malleable "shrink" order
 	 * is received and the hosts that were released need to be sent to the
 	 * scheduler.
 	 */
@@ -59,7 +59,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 
 	/**
 	 * Flag used to set verbose mode. Is initialized based on the value set for
-	 * property {@link Configuration#APGAS_VERBOSE_LAUNCHER}
+	 * property {@link Configuration#CONFIG_APGAS_VERBOSE_LAUNCHER}
 	 */
 	private final boolean verbose;
 
@@ -122,19 +122,17 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 				}
 
 				// Interpret received order and call the appropriate procedure
-				final String str[] = line.split(" ");
+				final String[] str = line.split(" ");
 				final String order = str[0];
 				final int change = Integer.parseInt(str[1]);
 				if (order.equals("shrink")) {
-					final int toReduce = change;
-					super.malleableShrink(toReduce);
+					super.malleableShrink(change);
 				} else if (order.equals("expand")) {
 					final List<String> hostnames = new ArrayList<>();
-					final int toIncrease = change;
-					for (int i = 0; i < toIncrease; i++) {
+					for (int i = 0; i < change; i++) {
 						hostnames.add(str[i + 2]);
 					}
-					super.malleableGrow(toIncrease, hostnames);
+					super.malleableGrow(change, hostnames);
 				} else {
 					System.err.println(
 							"Received unexpected order " + str[0] + ", expected <shrink> or <expand>. Ignoring ...");
