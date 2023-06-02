@@ -939,7 +939,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		synchronized (MALLEABILITY_SYNC) {
 			//  not needed here, only for cosmetic
 			GlobalRuntime.readyCounter.addAndGet(n);
-			try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+			try {
+				ExecutorService executor = Executors.newSingleThreadExecutor();
 				return executor.submit(() -> launcher.launch(hostManager, n, verboseLauncher));
 			} catch (final Exception e) {
 				e.printStackTrace();
