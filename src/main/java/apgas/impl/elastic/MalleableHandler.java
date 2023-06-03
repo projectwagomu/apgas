@@ -16,11 +16,12 @@ import apgas.Place;
  * <p>
  * Note that all the methods defined in this interface will be run from Place0.
  * If alterations to the running program need to be performed on other places,
- * the usual finish/asyncAt constructs provided by class {@link Constructs}.
+ * the usual finish/asyncAt constructs provided by class {@link Constructs} can be used.
  * <p>
- * Programmers willing to make their program malleable should define the handler
- * for their specific program using
- * {@link Constructs#defineMalleableHandle(MalleableHandler)}
+ * Programmers wishing to make their program malleable should implement this interface
+ * and define the handler using method
+ * {@link Constructs#defineMalleableHandle(MalleableHandler)} as soon as the program is
+ * ready to receive grow or shrink orders from the scheduler.
  *
  * @author Patrick Finnerty
  *

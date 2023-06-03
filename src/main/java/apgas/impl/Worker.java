@@ -25,10 +25,11 @@ public final class Worker extends ForkJoinWorkerThread {
 	 * Instantiates a Worker operating in the given pool.
 	 *
 	 * @param pool the pool this worker works in
+	 * @param id integer identifier for this worker
 	 */
-	protected Worker(ForkJoinPool pool, int myID) {
+	protected Worker(ForkJoinPool pool, int id) {
 		super(pool);
-		this.myID = myID;
+		this.myID = id;
 	}
 
 	/**

@@ -31,7 +31,8 @@ public class HostManager {
 		/**
 		 * Constructor
 		 *
-		 * @param hostName The Hostname of the Host
+		 * @param hostName hostname of the Host
+		 * @param maxPlacesPerHost maximum number of places that can be allocated per host
 		 */
 		public Host(final String hostName, final int maxPlacesPerHost) {
 			this.hostName = hostName;
@@ -129,6 +130,7 @@ public class HostManager {
 	 * Constructor
 	 *
 	 * @param hostnames The List of Hostnames to maintain
+	 * @param localhost the name of the local host
 	 */
 	public HostManager(final List<String> hostnames, final String localhost) {
 		// We assume that the first host in hostname is the localhost (master)
@@ -141,7 +143,7 @@ public class HostManager {
 
 			hosts.get(0).attachPlace(new Place(0));
 		} else if (localhost != null) {
-			final Host host = new Host(localhost, numFirstPlaces); // もともとはnumFirtsPlacesではなくInteger.MAX_VALUEになってた
+			final Host host = new Host(localhost, numFirstPlaces); 
 			host.attachPlace(new Place(0));
 			hosts.add(host);
 		} else {
@@ -161,7 +163,8 @@ public class HostManager {
 //  }
 
 	/**
-	 * adds a host, if the Name exits, the value of maxPlacesPerHost is incremented
+	 * Adds a host to the list of hosts being managed. If the hostname given as parameter is already contained in the managed list, the value of maxPlacesPerHost is incremented
+	 * @param hostname name of the new host susceptible to be used to launch new places
 	 */
 	public void addHost(String hostname) {
 		for (final Host host : hosts) {
@@ -199,12 +202,11 @@ public class HostManager {
 	/**
 	 * detaches the given Place from the corresponding Host
 	 *
-	 * @param place The Place which should be detached from its Host.
+	 * @param place The Place which should be detached from its Host
+	 * @return name of the host hosting the place up until now
 	 */
 	public String detachFromHost(final Place place) {
-		// findFirst should find always one or no entry, because a Place can only have
-		// one Host at a
-		// Time
+		// findFirst should find always one or no entry, because a Place can only have one Host at a Time
 		final Optional<Host> first = hosts.stream().filter(host -> host.attachedPlaces.contains(place)).findFirst();
 		removedHostName = null;
 		first.ifPresent(host -> {

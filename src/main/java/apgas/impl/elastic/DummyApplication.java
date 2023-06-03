@@ -1,4 +1,4 @@
-package apgas.testing;
+package apgas.impl.elastic;
 
 import static apgas.Constructs.asyncAt;
 import static apgas.Constructs.defineMalleableHandle;
@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import apgas.Place;
-import apgas.impl.elastic.MalleableHandler;
 
 /**
  * Simplistic program illustrating how to implement a malleable program

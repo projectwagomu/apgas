@@ -26,7 +26,10 @@ public class ConsolePrinter implements Serializable {
 	/** Serial Version UID */
 	private static final long serialVersionUID = 6535048433179703185L;
 
-	/** Obtain the printer instance for this process */
+	/** 
+	 * Obtain the printer instance for this process
+	 * @return printer instance for this process 
+	 */
 	public static synchronized ConsolePrinter getInstance() {
 		return ConsolePrinter.instance;
 	}

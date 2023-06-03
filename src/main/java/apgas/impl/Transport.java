@@ -77,6 +77,7 @@ public class Transport implements InitialMembershipListener {
 	 * @param master      member to connect to or null
 	 * @param localhost   the preferred ip address of this host or null
 	 * @param backupCount number of backups to use for distributed data structures
+	 * @param placeId integer identifier of this process (same as place id)
 	 */
 	protected Transport(GlobalRuntimeImpl runtime, String master, String localhost,
 			int backupCount, int placeId) {

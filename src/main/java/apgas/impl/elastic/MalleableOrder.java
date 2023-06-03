@@ -1,11 +1,9 @@
-package apgas.testing;
+package apgas.impl.elastic;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-
-import apgas.impl.elastic.SocketMalleableCommunicator;
 
 /**
  * Simple main used to send malleable shrink/grow orders to a running
@@ -26,7 +24,7 @@ public class MalleableOrder {
 	/**
 	 * This main takes different arguments depending on the type of order to
 	 * sent to the running malleable program.<br>
-	 * <h4>shrink case</h4> The arguments expected are:
+	 * <h1>shrink case</h1> The arguments expected are:
 	 * <ul>
 	 * <li>shrink
 	 * <li>number of host to release
@@ -35,7 +33,7 @@ public class MalleableOrder {
 	 * This program then expects to receive the released hosts from the running
 	 * program, one host per line. These hostnames are printed on the standard
 	 * output of this program.
-	 * <h4>grow case</h4> The arguments expected are:
+	 * <h1>grow case</h1> The arguments expected are:
 	 * <ul>
 	 * <li>grow
 	 * <li>number of hosts to grow by
