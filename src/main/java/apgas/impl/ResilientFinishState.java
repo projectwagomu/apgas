@@ -167,7 +167,7 @@ final class ResilientFinishState extends IncrementalEntryValue implements Serial
 	 * @return the computed index
 	 */
 	private static long index(int p, int q) {
-		return (((long) p) << 32) + q;
+		return ((long) p << 32) + q;
 	}
 
 	/**

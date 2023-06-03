@@ -47,10 +47,10 @@ public final class Configuration<T> {
 	public static final String APGAS_ELASTIC_FIXED = "fixed";
 
 	/**
-	 * Possible value for configuration {@link #APGAS_ELASTIC_PROPERTY}.
-	 * This value sets the runtime to be malleable. A malleable communicator
-	 * will be prepared by the runtime to receive instructions from the
-	 * scheduler. The programmer should call method
+	 * Possible value for configuration {@link #APGAS_ELASTIC_PROPERTY}. This value
+	 * sets the runtime to be malleable. A malleable communicator will be prepared
+	 * by the runtime to receive instructions from the scheduler. The programmer
+	 * should call method
 	 * {@link Constructs#defineMalleableHandle(apgas.impl.elastic.MalleableHandler)}
 	 * to define the actions to perform before and after a malleable change.
 	 */
@@ -77,9 +77,9 @@ public final class Configuration<T> {
 	/**
 	 * This Property defines the strategy of the hostmanager:
 	 * <ul>
-	 *  <li>0 : Places are added cyclical to the nodes (default)
-	 *  <li>1 : Nodes are filled one after the other. This can
-	 *  result in hosts without places
+	 * <li>0 : Places are added cyclical to the nodes (default)
+	 * <li>1 : Nodes are filled one after the other. This can result in hosts
+	 * without places
 	 * </ul>
 	 */
 	public static final String APGAS_HOSTMANAGER_STRATEGY_PROPERTY = "apgas.hostmanager.strategy";
@@ -198,12 +198,12 @@ public final class Configuration<T> {
 	public static final String APGAS_VERBOSE_LAUNCHER_PROPERTY = "apgas.verbose.launcher";
 
 	/** Configuration object for {@link #APGAS_BACKUPCOUNT_PROPERTY} */
-	public static final Configuration<Integer> CONFIG_APGAS_BACKUPCOUNT = new Configuration<>(APGAS_BACKUPCOUNT_PROPERTY, 1,
-			Integer.class);
+	public static final Configuration<Integer> CONFIG_APGAS_BACKUPCOUNT = new Configuration<>(
+			APGAS_BACKUPCOUNT_PROPERTY, 1, Integer.class);
 
 	/** Configuration object for {@link #APGAS_CONSOLEPRINTER_PROPERTY} */
-	public static final Configuration<Boolean> CONFIG_APGAS_CONSOLEPRINTER = new Configuration<>(APGAS_CONSOLEPRINTER_PROPERTY,
-			false, Boolean.class);
+	public static final Configuration<Boolean> CONFIG_APGAS_CONSOLEPRINTER = new Configuration<>(
+			APGAS_CONSOLEPRINTER_PROPERTY, false, Boolean.class);
 
 	/**
 	 * Property defining if the program is allowed to change the number of running
@@ -240,11 +240,12 @@ public final class Configuration<T> {
 			APGAS_MALLEABLE_COMMUNICATOR_PROPERTY, SocketMalleableCommunicator.class.getCanonicalName(), String.class);
 
 	/** Configuration object for {@link #APGAS_MASTER_PROPERTY} */
-	public static final Configuration<String> CONFIG_APGAS_MASTER = new Configuration<>(APGAS_MASTER_PROPERTY, String.class);
+	public static final Configuration<String> CONFIG_APGAS_MASTER = new Configuration<>(APGAS_MASTER_PROPERTY,
+			String.class);
 
 	/** Configuration for property {@value #APGAS_MAX_THREADS_PROPERTY} */
-	public static final Configuration<Integer> CONFIG_APGAS_MAX_THREADS = new Configuration<>(APGAS_MAX_THREADS_PROPERTY, 256,
-			Integer.class);
+	public static final Configuration<Integer> CONFIG_APGAS_MAX_THREADS = new Configuration<>(
+			APGAS_MAX_THREADS_PROPERTY, 256, Integer.class);
 
 	/** Configuration for property {@value #APGAS_NETWORK_INTERFACE_PROPERTY} */
 	public static final Configuration<String> CONFIG_APGAS_NETWORK_INTERFACE = new Configuration<>(
@@ -263,8 +264,8 @@ public final class Configuration<T> {
 			Integer.class);
 
 	/** Configuration object for {@link #APGAS_RESILIENT_PROPERTY} */
-	public static final Configuration<Boolean> CONFIG_APGAS_RESILIENT = new Configuration<>(APGAS_RESILIENT_PROPERTY, false,
-			Boolean.class);
+	public static final Configuration<Boolean> CONFIG_APGAS_RESILIENT = new Configuration<>(APGAS_RESILIENT_PROPERTY,
+			false, Boolean.class);
 
 	/** Configuration object for {@link #APGAS_THREADS_PROPERTY} */
 	public static final Configuration<Integer> CONFIG_APGAS_THREADS = new Configuration<>(APGAS_THREADS_PROPERTY,

@@ -9,5 +9,8 @@
  *  (C) Copyright IBM Corporation 2006-2016.
  */
 
-/** The {@link apgas.impl.elastic} package implements the parts of the runtime involved when dynamically changing the number of running places */
+/**
+ * The {@link apgas.impl.elastic} package implements the parts of the runtime
+ * involved when dynamically changing the number of running places
+ */
 package apgas.impl.elastic;

@@ -93,7 +93,7 @@ public class GlobalID implements Serializable {
 	 * @return a globally unique ID
 	 */
 	public long gid() {
-		return (((long) home.id) << 32) + lid;
+		return ((long) home.id << 32) + lid;
 	}
 
 	@Override

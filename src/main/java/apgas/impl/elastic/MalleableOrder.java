@@ -6,8 +6,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- * Simple main used to send malleable shrink/grow orders to a running
- * malleable APGAS program using the {@link SocketMalleableCommunicator} as the
+ * Simple main used to send malleable shrink/grow orders to a running malleable
+ * APGAS program using the {@link SocketMalleableCommunicator} as the
  * communicator
  *
  * @author Kanzaki
@@ -22,8 +22,8 @@ public class MalleableOrder {
 	private static final String JOB_PORT = "job.port";
 
 	/**
-	 * This main takes different arguments depending on the type of order to
-	 * sent to the running malleable program.<br>
+	 * This main takes different arguments depending on the type of order to sent to
+	 * the running malleable program.<br>
 	 * <h1>shrink case</h1> The arguments expected are:
 	 * <ul>
 	 * <li>shrink
@@ -56,7 +56,7 @@ public class MalleableOrder {
 			// Send the order as it was received by this program
 			String str = new String();
 			for (final String arg : args) {
-				str += (arg + " ");
+				str += arg + " ";
 			}
 			writer.println(str);
 

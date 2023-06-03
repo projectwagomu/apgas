@@ -95,7 +95,7 @@ public class DummyApplication {
 
 		// Start dummy computation for the indicated time
 		final long startWait = System.nanoTime();
-		while (System.nanoTime() - startWait < (1e9 * toElapse)) {
+		while (System.nanoTime() - startWait < 1e9 * toElapse) {
 			try {
 				Thread.sleep(100);// Wait in 100ms increments
 			} catch (final InterruptedException e) {

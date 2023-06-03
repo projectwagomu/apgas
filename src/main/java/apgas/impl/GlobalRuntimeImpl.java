@@ -223,7 +223,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		// initialize scheduler
 		pool = new MyForkJoinPool(Configuration.CONFIG_APGAS_THREADS.get(), maxThreads, new WorkerFactory(), null);
 
-		immediatePool = (ThreadPoolExecutor) Executors.newFixedThreadPool(Configuration.CONFIG_APGAS_IMMEDIATE_THREADS.get());
+		immediatePool = (ThreadPoolExecutor) Executors
+				.newFixedThreadPool(Configuration.CONFIG_APGAS_IMMEDIATE_THREADS.get());
 
 		// Initialize transport
 		transport = new Transport(this, master, ip, backupCount, placeID);
@@ -282,7 +283,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		reduceReadyCounter();
 
 		if (here == 0 && verboseLauncher) {
-			System.out.println("[APGAS] Place startup time: " + ((System.nanoTime() - begin) / 1E9) + " sec");
+			System.out.println("[APGAS] Place startup time: " + (System.nanoTime() - begin) / 1E9 + " sec");
 		}
 	}
 
@@ -732,8 +733,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 				while (e.hasMoreElements()) {
 					final InetAddress inetAddress = e.nextElement();
 					// force apgas.network.interface
-					if (inetAddress.isLoopbackAddress() || inetAddress instanceof Inet6Address || (cleanNetworkInterface.length() > 0
-							&& !inetAddress.getHostAddress().contains(cleanNetworkInterface))) {
+					if (inetAddress.isLoopbackAddress() || inetAddress instanceof Inet6Address
+							|| cleanNetworkInterface.length() > 0
+									&& !inetAddress.getHostAddress().contains(cleanNetworkInterface)) {
 						continue;
 					}
 
@@ -897,7 +899,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			// of processes
 			final GlobalRef<CountDownLatch> globalRef = new GlobalRef<>(new CountDownLatch(expectedPlacesCount - 1));
 			for (final Place p : places()) {
-				if ((p.id == here().id) || toRelease.contains(p)) {
+				if (p.id == here().id || toRelease.contains(p)) {
 					continue;
 				}
 				final boolean verbose = verboseLauncher;
@@ -935,10 +937,10 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		}
 
 		synchronized (MALLEABILITY_SYNC) {
-			//  not needed here, only for cosmetic
+			// not needed here, only for cosmetic
 			GlobalRuntime.readyCounter.addAndGet(n);
 			try {
-				ExecutorService executor = Executors.newSingleThreadExecutor();
+				final ExecutorService executor = Executors.newSingleThreadExecutor();
 				return executor.submit(() -> launcher.launch(hostManager, n, verboseLauncher));
 			} catch (final Exception e) {
 				e.printStackTrace();
@@ -1104,10 +1106,10 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	}
 
 	private void waitForNewPlacesCount(int expectedPlacesCount) {
-		while ((places().size() != expectedPlacesCount)
-				|| (transport.hazelcast.getCluster().getMembers().size() != expectedPlacesCount)
-				|| (!transport.hazelcast.getPartitionService().isClusterSafe())
-				|| (transport.getMembers().values().size() != expectedPlacesCount)) {
+		while (places().size() != expectedPlacesCount
+				|| transport.hazelcast.getCluster().getMembers().size() != expectedPlacesCount
+				|| !transport.hazelcast.getPartitionService().isClusterSafe()
+				|| transport.getMembers().values().size() != expectedPlacesCount) {
 			if (verboseLauncher) {
 				System.out.println("[APGAS] Place(" + here + "): waiting for malleability, places().size()="
 						+ places().size() + ", expectedPlacesCount=" + expectedPlacesCount);

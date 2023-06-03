@@ -51,9 +51,8 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 	/**
 	 * Socket of malleable connections
 	 * <p>
-	 * This socket is kept as a member for cases whereas malleable "shrink" order
-	 * is received and the hosts that were released need to be sent to the
-	 * scheduler.
+	 * This socket is kept as a member for cases whereas malleable "shrink" order is
+	 * received and the hosts that were released need to be sent to the scheduler.
 	 */
 	private Socket socket = null;
 

@@ -31,8 +31,9 @@ public class HostManager {
 		/**
 		 * Constructor
 		 *
-		 * @param hostName hostname of the Host
-		 * @param maxPlacesPerHost maximum number of places that can be allocated per host
+		 * @param hostName         hostname of the Host
+		 * @param maxPlacesPerHost maximum number of places that can be allocated per
+		 *                         host
 		 */
 		public Host(final String hostName, final int maxPlacesPerHost) {
 			this.hostName = hostName;
@@ -143,7 +144,7 @@ public class HostManager {
 
 			hosts.get(0).attachPlace(new Place(0));
 		} else if (localhost != null) {
-			final Host host = new Host(localhost, numFirstPlaces); 
+			final Host host = new Host(localhost, numFirstPlaces);
 			host.attachPlace(new Place(0));
 			hosts.add(host);
 		} else {
@@ -163,8 +164,12 @@ public class HostManager {
 //  }
 
 	/**
-	 * Adds a host to the list of hosts being managed. If the hostname given as parameter is already contained in the managed list, the value of maxPlacesPerHost is incremented
-	 * @param hostname name of the new host susceptible to be used to launch new places
+	 * Adds a host to the list of hosts being managed. If the hostname given as
+	 * parameter is already contained in the managed list, the value of
+	 * maxPlacesPerHost is incremented
+	 *
+	 * @param hostname name of the new host susceptible to be used to launch new
+	 *                 places
 	 */
 	public void addHost(String hostname) {
 		for (final Host host : hosts) {
@@ -190,12 +195,12 @@ public class HostManager {
 		launchCommand.add("-cp");
 		launchCommand.add(System.getProperty("java.class.path"));
 		for (final String property : System.getProperties().stringPropertyNames()) {
-			if ((property.startsWith("apgas.") && !property.contains(".place.id")) || property.startsWith("glb")) {
+			if (property.startsWith("apgas.") && !property.contains(".place.id") || property.startsWith("glb")) {
 				launchCommand.add("-D" + property + "=" + System.getProperty(property));
 			}
 		}
-		launchCommand.add(
-				"-D" + Configuration.CONFIG_APGAS_MASTER.getName() + "=" + masterIp + ":" + Configuration.CONFIG_APGAS_PORT.get());
+		launchCommand.add("-D" + Configuration.CONFIG_APGAS_MASTER.getName() + "=" + masterIp + ":"
+				+ Configuration.CONFIG_APGAS_PORT.get());
 		launchCommand.add(classToStart);
 	}
 
@@ -206,7 +211,8 @@ public class HostManager {
 	 * @return name of the host hosting the place up until now
 	 */
 	public String detachFromHost(final Place place) {
-		// findFirst should find always one or no entry, because a Place can only have one Host at a Time
+		// findFirst should find always one or no entry, because a Place can only have
+		// one Host at a Time
 		final Optional<Host> first = hosts.stream().filter(host -> host.attachedPlaces.contains(place)).findFirst();
 		removedHostName = null;
 		first.ifPresent(host -> {

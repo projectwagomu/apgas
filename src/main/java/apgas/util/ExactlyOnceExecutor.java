@@ -47,7 +47,7 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
 	}
 
 	public Object executeOnKey(final IMap<T, V> map, final T key, final EntryProcessor<T, V> processor) {
-		final long uid = ExactlyOnceExecutor.uid.incrementAndGet() + ((long) (here().id) << 32);
+		final long uid = ExactlyOnceExecutor.uid.incrementAndGet() + ((long) here().id << 32);
 		final EntryBackupProcessor<T, V> backupProcessor = processor.getBackupProcessor();
 		Object ret = null;
 		try {
@@ -79,7 +79,7 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
 	}
 
 	public Future<?> submitOnKey(IMap<T, V> map, T key, final EntryProcessor<T, V> processor) {
-		final long uid = ExactlyOnceExecutor.uid.incrementAndGet() + ((long) (here().id) << 32);
+		final long uid = ExactlyOnceExecutor.uid.incrementAndGet() + ((long) here().id << 32);
 		final EntryBackupProcessor<T, V> backupProcessor = processor.getBackupProcessor();
 		return map.submitToKey(key, new EntryProcessor<T, V>() {
 			private static final long serialVersionUID = -2225168921089863027L;
@@ -105,7 +105,7 @@ public class ExactlyOnceExecutor<T, V extends IncrementalEntryValue> implements 
 
 	public void submitOnKey(IMap<T, V> map, T key, final EntryProcessor<T, V> processor,
 			final ExecutionCallback<T> callback) {
-		final long uid = ExactlyOnceExecutor.uid.incrementAndGet() + ((long) (here().id) << 32);
+		final long uid = ExactlyOnceExecutor.uid.incrementAndGet() + ((long) here().id << 32);
 		final EntryBackupProcessor<T, V> backupProcessor = processor.getBackupProcessor();
 		map.submitToKey(key, new EntryProcessor<T, V>() {
 			private static final long serialVersionUID = -2225168921089863027L;
