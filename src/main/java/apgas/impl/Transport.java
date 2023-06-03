@@ -33,6 +33,7 @@ import com.hazelcast.core.InitialMembershipListener;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
+import com.hazelcast.instance.EndpointQualifier;
 
 import apgas.Configuration;
 import apgas.DeadPlaceException;
@@ -139,7 +140,7 @@ public class Transport implements InitialMembershipListener {
 	 * @return an address in the form "ip:port"
 	 */
 	protected String getAddress() {
-		final InetSocketAddress address = me.getSocketAddress();
+		final InetSocketAddress address = me.getSocketAddress(EndpointQualifier.MEMBER);
 		return address.getAddress().getHostAddress() + ":" + address.getPort();
 	}
 

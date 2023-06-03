@@ -204,7 +204,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			resilient = Configuration.CONFIG_APGAS_RESILIENT.get();
 		}
 		final int maxThreads = Configuration.CONFIG_APGAS_MAX_THREADS.get();
-		final String launcherName = Configuration.CONFIG_APGAS_LAUNCHER.get();
 		final int backupCount = Configuration.CONFIG_APGAS_BACKUPCOUNT.get();
 		final int placeID = Configuration.CONFIG_APGAS_PLACE_ID.get();
 
