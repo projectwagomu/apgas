@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Test script used to launch a test application and check that the application reacts correctly to the malleable instructions
+# Test script used to launch a test application and check that
+# the application reacts correctly to the malleable instructions
 mvn clean install -DskipTests
 
 cd "$(dirname "$0")"
@@ -18,7 +19,13 @@ cat $HOSTFILE
 echo ">>>>"
 
 MAINPRGM= java -cp "../target/*" \
-     --add-modules java.se --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.management/sun.management=ALL-UNNAMED --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
+     --add-modules java.se \
+     --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
+     --add-opens java.base/java.lang=ALL-UNNAMED \
+     --add-opens java.base/java.nio=ALL-UNNAMED  \
+     --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+     --add-opens java.management/sun.management=ALL-UNNAMED \
+     --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
      -Dapgas.verbose.launcher=true \
      -Dapgas.places=4 \
      -Dapgas.elastic=malleable \
