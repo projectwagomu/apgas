@@ -9,19 +9,8 @@
  * SPDX-License-Identifier: EPL-1.0
  */
 
-package apgas;
-
-import java.io.Serializable;
-
 /**
- * A serializable functional interface with no arguments and no return value.
- *
- * <p>
- * The functional method is {@link #run()}.
+ * The {@link apgas.impl.elastic} package implements the parts of the runtime
+ * involved when dynamically changing the number of running places
  */
-@FunctionalInterface
-public interface SerializableJob extends Serializable, Job {
-
-	@Override
-	void run() throws Exception;
-}
+package apgas.impl.elastic;
