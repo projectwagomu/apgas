@@ -4,7 +4,7 @@ This project is an extension of the X10-derived [APGAS for Java](https://github.
 
 This library enables _malleable_ programs, that is, programs that can modify the number of processes they are currently using following an order coming from the job scheduler. The default implementation relies on sockets to receive _shrink_ and _grow_ orders, but is implemented in a modular whay that will allow easy adaptation to other communication methods between the running AGPAS program and the job scheduler.
 
-Upon receiving a _shrink_ or _grow_ order, the APGAS runtime will transmit this information to the user-implemented `MalleableHandler`. This allows application developers to relocate their necessary data and tasks of their application before and after _Place_s are removed and added to the runtime. A [dummy application](src/main/java/apgas/impl/elastic/DummyApplication) along with [a script](bin/) demonstrating these mechanisms are provided.
+Upon receiving a _shrink_ or _grow_ order, the APGAS runtime will transmit this information to the user-implemented `MalleableHandler`. This allows application developers to relocate their necessary data and tasks of their application before and after *Place*s are removed and added to the runtime. A [dummy application](src/main/java/apgas/impl/elastic/DummyApplication.java) along with a [script](bin/testMalleableApplications.sh) demonstrating these mechanisms are provided.
 
 ## Requirements
 
@@ -22,6 +22,12 @@ To compile and add this project to your local Maven repository, use command
 
 ```shell
 $ mvn install
+```
+
+or without running tests
+
+```shell
+$ mvn install -DskipTests
 ```
 
 To generate the Javadoc and other reports about this project, use command
