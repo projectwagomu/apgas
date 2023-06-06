@@ -34,7 +34,7 @@ public class MalleableOrder {
 	/**
 	 * This main takes different arguments depending on the type of order to sent to
 	 * the running malleable program.<br>
-	 * <h1>shrink case</h1> The arguments expected are:
+	 * <strong>shrink case</strong> The arguments expected are:
 	 * <ul>
 	 * <li>shrink
 	 * <li>number of host to release
@@ -43,7 +43,7 @@ public class MalleableOrder {
 	 * This program then expects to receive the released hosts from the running
 	 * program, one host per line. These hostnames are printed on the standard
 	 * output of this program.
-	 * <h1>grow case</h1> The arguments expected are:
+	 * <strong>grow case</strong> The arguments expected are:
 	 * <ul>
 	 * <li>grow
 	 * <li>number of hosts to grow by
