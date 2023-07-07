@@ -20,10 +20,10 @@ public class SrunLauncher extends RemoteLauncher {
 	@Override
 	void startRemote(List<String> command, boolean verbose, String hostAddress) {
 		command.add(0, "srun");
-		command.add(2, "-N 1");
-		command.add(3, "-n 1");
-		command.add(4, "-w");
-		command.add(5, hostAddress);
+		command.add(1, "-N 1");
+		command.add(2, "-n 1");
+		command.add(3, "-w");
+		command.add(4, hostAddress);
 		if (verbose) {
 			System.err.println("[APGAS] Spawning new place: " + String.join(" ", command));
 		}
