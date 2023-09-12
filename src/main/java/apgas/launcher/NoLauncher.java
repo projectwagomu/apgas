@@ -25,7 +25,7 @@ public class NoLauncher implements Launcher {
 	}
 
 	@Override
-	public List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception {
+	public List<Integer> launch(HostManager hostManager, int n, boolean verbose, int expectedPlacesCount) throws Exception {
 		if (verbose) {
 			System.err.println("[APGAS] Ignoring attempt to spawn " + n + " new place(s), command: "
 					+ String.join(" ", hostManager.getCopyOfLaunchCommand()));

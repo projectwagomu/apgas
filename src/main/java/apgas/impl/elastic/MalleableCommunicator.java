@@ -28,6 +28,13 @@ import apgas.impl.GlobalRuntimeImpl;
 public abstract class MalleableCommunicator {
 
 	/**
+	 * Used to make sure both pre(Grow/Shrink) and pro(Grow/Shrink)
+	 * have been finished before the MalleableCommunicator is disabled
+	 */
+	public final Object lock = new Object();
+
+
+	/**
 	 * Informs the scheduler that the hosts given as argument were released
 	 *
 	 * @param hosts released following a shrink order
@@ -99,4 +106,6 @@ public abstract class MalleableCommunicator {
 	 * gives the opportunity to the communicator to shutdown cleanly.
 	 */
 	public abstract void stop();
+
+	public abstract void interrupt();
 }

@@ -167,7 +167,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	Runnable shutdownHandler;
 
 	/** timeout for apgas runtime starting in seconds */
-	int timeoutStarting = 500;
+	int timeoutStarting = 60;
 
 	/** The transport for this global runtime instance. */
 	final Transport transport;
@@ -355,18 +355,19 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	/**
 	 * Sub-routine called in case the malleable communicator fails for some reason.
 	 */
-	private void disableMalleableCommunicator() {
-		// Diable the malleable communicator
-		System.err.println("The Malleable Communicator sufferred an issue and will be stopped");
-		try {
-			malleableCommunicator.stop();
-		} catch (final Exception e) {
-			System.err.println("An error occurred while trying to shut down the malleable communicator");
-			e.printStackTrace();
-		} finally {
-			malleableCommunicator = null;
-			malleableHandler = null;
-		}
+	public void disableMalleableCommunicator() {
+		System.err.println("The Malleable Communicator will be stopped");
+		synchronized(malleableCommunicator.lock) {
+			try {
+				malleableCommunicator.interrupt();
+			} catch (final Exception e) {
+				System.err.println("An error occurred while trying to shut down the malleable communicator");
+				e.printStackTrace();
+			} finally {
+				malleableCommunicator = null;
+				malleableHandler = null;
+			}
+			}
 	}
 
 	/**
@@ -543,7 +544,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 					return;
 				}
 				// launch additional places
-				launcher.launch(hostManager, initialPlaces - 1, verboseLauncher);
+				launcher.launch(hostManager, initialPlaces - 1, verboseLauncher, initialPlaces);
 			} catch (final Exception t) {
 				// initiate shutdown
 				t.printStackTrace();
@@ -929,7 +930,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 	 * @return a future returning a list of integers containing the place ids of the
 	 *         new places
 	 */
-	private Future<List<Integer>> startMallPlaces(int n) {
+	private Future<List<Integer>> startMallPlaces(int n, int expectedPlacesCount) {
 		if (!isMaster) {
 			System.err.println(
 					"[APGAS] " + home + " called startMallPlaces(), but only the master is allowed to do this");
@@ -941,7 +942,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 			GlobalRuntime.readyCounter.addAndGet(n);
 			try {
 				final ExecutorService executor = Executors.newSingleThreadExecutor();
-				return executor.submit(() -> launcher.launch(hostManager, n, verboseLauncher));
+				return executor.submit(() -> launcher.launch(hostManager, n, verboseLauncher, expectedPlacesCount));
 			} catch (final Exception e) {
 				e.printStackTrace();
 				return null;
@@ -963,7 +964,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 		synchronized (MALLEABILITY_SYNC) {
 			final int initialPlacesCount = places.size();
 			final int expectedPlacesCount = initialPlacesCount + n;
-			final Future<List<Integer>> listFuture = startMallPlaces(n);
+			final Future<List<Integer>> listFuture = startMallPlaces(n, expectedPlacesCount);
 			// wait on place 0
 			waitForNewPlacesCount(expectedPlacesCount);
 

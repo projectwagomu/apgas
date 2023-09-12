@@ -62,7 +62,7 @@ public abstract class RemoteLauncher implements Launcher {
 	}
 
 	@Override
-	public List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception {
+	public List<Integer> launch(HostManager hostManager, int n, boolean verbose, int expectedPlacesCount) throws Exception {
 
 		final List<String> command = hostManager.getCopyOfLaunchCommand();
 
@@ -98,6 +98,18 @@ public abstract class RemoteLauncher implements Launcher {
 
 			command.add("-D" + Configuration.CONFIG_APGAS_PLACE_ID.getName() + "=" + newPlaceID);
 			command.add(remove);
+
+			boolean found = false;
+			for (int i = 0; i < command.size(); i++) {
+				if (command.get(i).contains("-Dapgas.places=")) {
+					command.set(i, "-Dapgas.places=" + expectedPlacesCount);
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				System.err.println("[APGAS] -Dapgas.places= not found in command list");
+			}
 
 			if (local) {
 				process = processBuilder.start();

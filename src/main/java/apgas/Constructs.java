@@ -101,6 +101,16 @@ public final class Constructs {
 		GlobalRuntime.getRuntimeImpl().setMalleableHandler(handler);
 	}
 
+
+	/**
+	 * Disables the malleable communicator, i.e., the program is no longer
+	 * malleable.
+	 */
+	public static void disableMalleableCommunicator() {
+		GlobalRuntime.getRuntimeImpl().disableMalleableCommunicator();
+	}
+
+
 	/**
 	 * Evaluates {@code f}, waits for all the tasks transitively spawned by
 	 * {@code f}, and returns the result.

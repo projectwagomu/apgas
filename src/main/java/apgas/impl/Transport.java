@@ -89,7 +89,11 @@ public class Transport implements InitialMembershipListener {
 		config.setProperty("hazelcast.wait.seconds.before.join", "0");
 		config.setProperty("hazelcast.socket.connect.timeout.seconds", "1");
 
-		config.setProperty("hazelcast.partition.count", String.valueOf(Configuration.CONFIG_APGAS_PLACES.get()));
+		// Partition count must be the same for all hazelcast members
+		// Thus, we use this only for fixed runs, i.e., especially for fault tolerance
+		if (Configuration.CONFIG_APGAS_ELASTIC.equals(Configuration.APGAS_ELASTIC_FIXED)) {
+			config.setProperty("hazelcast.partition.count", String.valueOf(Configuration.CONFIG_APGAS_PLACES.get()));
+		}
 
 		final NetworkConfig networkConfig = config.getNetworkConfig();
 

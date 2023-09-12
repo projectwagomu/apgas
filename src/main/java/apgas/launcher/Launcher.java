@@ -33,10 +33,11 @@ public interface Launcher {
 	 * @param hostManager containing all hosts and generator for place ids
 	 * @param n           number of processes to launch
 	 * @param verbose     dumps the executed commands to stderr
+	 * @param expectedPlacesCount     expected places count after launching was done
 	 * @throws Exception if launching fails
 	 * @return the place ids of the newly launched processes
 	 */
-	List<Integer> launch(HostManager hostManager, int n, boolean verbose) throws Exception;
+	List<Integer> launch(HostManager hostManager, int n, boolean verbose, int expectedPlacesCount) throws Exception;
 
 	/** Shuts down the {@link Launcher} instance. */
 	void shutdown();

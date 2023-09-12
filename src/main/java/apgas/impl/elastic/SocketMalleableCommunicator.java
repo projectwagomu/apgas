@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -130,23 +131,31 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 					System.out.println("SocketMalleableCommunicator received: " + line);
 				}
 
-				// Interpret received order and call the appropriate procedure
-				final String[] str = line.split(" ");
-				final String order = str[0];
-				final int change = Integer.parseInt(str[1]);
-				if (order.equals("shrink")) {
-					super.malleableShrink(change);
-				} else if (order.equals("grow")) {
-					final List<String> hostnames = new ArrayList<>();
-					for (int i = 0; i < change; i++) {
-						hostnames.add(str[i + 2]);
-					}
-					super.malleableGrow(change, hostnames);
-				} else {
-					System.err.println(
-							"Received unexpected order " + str[0] + ", expected <shrink> or <grow>. Ignoring ...");
+				if (!listening) {
+					break;
 				}
-			} catch (final IOException e) {
+
+				synchronized(lock) {
+					// Interpret received order and call the appropriate procedure
+					final String[] str = line.split(" ");
+					final String order = str[0];
+					final int change = Integer.parseInt(str[1]);
+					if (order.equals("shrink")) {
+						super.malleableShrink(change);
+					} else if (order.equals("grow")) {
+						final List<String> hostnames = new ArrayList<>();
+						for (int i = 0; i < change; i++) {
+							hostnames.add(str[i + 2]);
+						}
+						super.malleableGrow(change, hostnames);
+					} else {
+						System.err.println(
+								"Received unexpected order " + str[0] + ", expected <shrink> or <grow>. Ignoring ...");
+					}
+				}
+			} catch (SocketException | NullPointerException ignored) {
+				System.err.println("Socket was Closed");
+			} catch (final Exception e) {
 				System.err.println("IO error while reading content from the socket");
 				e.printStackTrace();
 			}
@@ -164,8 +173,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 					+ schedulerIP + ":" + schedulerPort);
 		}
 		// We now fork a thread to listen to the socket and call the relevant method
-		// when
-		// an order from the scheduler is received.
+		// when an order from the scheduler is received.
 		listenerThread = new Thread(this::listenToSocket);
 		listenerThread.start();
 	}
@@ -186,6 +194,20 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 		listening = false;
 
 		// If the start method was not called, listenerThread may be null
+		if (listenerThread != null) {
+			listenerThread.interrupt();
+		}
+	}
+
+	@Override
+	public void interrupt() {
+		if (verbose) {
+			System.err.println(SocketMalleableCommunicator.class.getName()
+					+ " stop() method called, closing socket and cleaning up.");
+		}
+
+		// Interrupt and release the thread listening on the socket
+		listening = false;
 		if (listenerThread != null) {
 			listenerThread.interrupt();
 		}
