@@ -101,6 +101,15 @@ public final class Constructs {
   }
 
   /**
+   * Sends a message to the external scheduler process
+   *
+   * @param message
+   */
+  public static void sendToScheduler(final String message) {
+    GlobalRuntime.getRuntimeImpl().sendToScheduler(message);
+  }
+
+  /**
    * Evaluates {@code f}, waits for all the tasks transitively spawned by {@code f}, and returns the
    * result.
    *

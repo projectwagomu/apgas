@@ -104,5 +104,12 @@ public abstract class MalleableCommunicator {
    */
   public abstract void stop();
 
+  /**
+   * Sends a message to the external scheduler
+   *
+   * @param message
+   */
+  public abstract void sendToScheduler(final String message);
+
   public abstract void interrupt();
 }

@@ -65,6 +65,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
   /** Synchronization Object for the Malleability Methods: AddPlaces and RemovePlaces */
   static final Object MALLEABILITY_SYNC = new Object();
 
+  /** Ip of this process/place */
+  public static String ip;
+
   private static GlobalRuntimeImpl runtime;
 
   /** Indicates if the instance is ready */
@@ -178,7 +181,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
       System.err.println("JVM of Place " + placeID + " started");
     }
 
-    final String ip = selectGoodIPForHost();
+    ip = selectGoodIPForHost();
 
     if (isMaster) {
       initializeLauncher();
@@ -389,6 +392,14 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
         malleableCommunicator = null;
         malleableHandler = null;
       }
+    }
+  }
+
+  public void sendToScheduler(final String message) {
+    if (malleableCommunicator == null) {
+      System.err.println("sendToScheduler : malleableCommunicator is null");
+    } else {
+      malleableCommunicator.sendToScheduler(message);
     }
   }
 
@@ -977,7 +988,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
    * @param n number of places to spawn
    * @return a future returning a list of integers containing the place ids of the new places
    */
-  private Future<List<Integer>> startMallPlaces(int n, int expectedPlacesCount) {
+  private Future<List<Integer>> startMallPlaces(final int n, final int expectedPlacesCount) {
     if (!isMaster) {
       System.err.println(
           "[APGAS] "
@@ -1199,6 +1210,15 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
       } catch (final InterruptedException e) {
         e.printStackTrace();
       }
+    }
+    if (verboseLauncher) {
+      System.out.println(
+          "[APGAS] Place("
+              + here
+              + "): waiting for malleability DONE, places().size()="
+              + places().size()
+              + ", expectedPlacesCount="
+              + expectedPlacesCount);
     }
   }
 }

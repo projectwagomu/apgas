@@ -11,13 +11,12 @@
 package apgas.impl.elastic;
 
 import apgas.Configuration;
+import apgas.impl.GlobalRuntimeImpl;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,8 +38,12 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
   /** Value of property {@link #SCHEDULER_IP} for this execution */
   private final String schedulerIP;
 
+  private final String serverSocketIP;
+
   /** Value of property {@link #SCHEDULER_Port} for this execution */
   private final int schedulerPort;
+
+  private final int serverSocketPort;
 
   /** Socket used to receive orders from the scheduler */
   private final ServerSocket server;
@@ -84,10 +87,21 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
           "Cannot create the SocketMalleableCommunicator, either the IP or the port of the scheduler was not set");
     }
     schedulerIP = System.getProperty(SCHEDULER_IP);
+    // local:
+    if (schedulerIP.equals("127.0.0.1")) {
+      serverSocketIP = "127.0.0.1";
+      // cluster:
+    } else {
+      serverSocketIP = GlobalRuntimeImpl.ip;
+      // Alternative:
+      // serverSocketIP = Inet4Address.getLocalHost().getHostAddress();
+    }
+
+    serverSocketPort = Integer.parseInt(System.getProperty(SCHEDULER_Port));
     schedulerPort = Integer.parseInt(System.getProperty(SCHEDULER_Port));
 
     server = new ServerSocket();
-    server.bind(new InetSocketAddress(schedulerIP, schedulerPort));
+    server.bind(new InetSocketAddress(serverSocketIP, serverSocketPort));
 
     verbose = Configuration.CONFIG_APGAS_VERBOSE_LAUNCHER.get();
   }
@@ -126,21 +140,25 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
           System.out.println("SocketMalleableCommunicator received: " + line);
         }
 
-        if (!listening) {
-          break;
-        }
-
+        if (!listening) break;
         synchronized (lock) {
           // Interpret received order and call the appropriate procedure
           final String[] str = line.split(" ");
           final String order = str[0];
           final int change = Integer.parseInt(str[1]);
           if (order.equals("shrink")) {
+            long before = System.nanoTime();
             super.malleableShrink(change);
+            long shrinkTime = System.nanoTime() - before;
+            sendToScheduler("shrinkTimeAPGAS;" + change + ";" + shrinkTime);
           } else if (order.equals("grow")) {
             final List<String> hostnames = new ArrayList<>();
             hostnames.addAll(Arrays.asList(str).subList(2, change + 2));
+
+            long before = System.nanoTime();
             super.malleableGrow(change, hostnames);
+            long growTime = System.nanoTime() - before;
+            sendToScheduler("growTimeAPGAS;" + change + ";" + growTime);
           } else {
             System.err.println(
                 "Received unexpected order "
@@ -166,14 +184,55 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
     if (verbose) {
       System.err.println(
           "SocketMalleableCommunicator start() method called, opening socket to listen to "
-              + schedulerIP
+              + serverSocketIP
               + ":"
-              + schedulerPort);
+              + serverSocketPort);
+
+      System.err.println("Have Scheduler Connection " + schedulerIP + ":" + schedulerPort);
     }
+
     // We now fork a thread to listen to the socket and call the relevant method
     // when an order from the scheduler is received.
     listenerThread = new Thread(this::listenToSocket);
     listenerThread.start();
+
+    sendToScheduler("APGAS-Ready");
+  }
+
+  /**
+   * sends some text to the scheduler program and appends ":serverSocketIP" (important as our
+   * scheduler parses the string this way)
+   *
+   * @param message sent to the scheduler program
+   */
+  public void sendToScheduler(final String message) {
+    if (System.getProperty(SCHEDULER_IP).equals("127.0.0.1")) {
+      System.err.println("[sendToScheduler] scheduler ip is 127.0.0.1 ; return");
+      return;
+    }
+
+    if (message.contains(":")) {
+      System.err.println("[sendToScheduler] `:` is not allowed ; return");
+      return;
+    }
+
+    try {
+      Socket socketScheduler = new Socket(schedulerIP, schedulerPort);
+      PrintWriter schedulerOut = new PrintWriter(socketScheduler.getOutputStream(), true);
+      String text = message + ":" + serverSocketIP;
+      schedulerOut.println(text);
+      if (verbose) {
+        System.err.println(text);
+      }
+      socketScheduler.close();
+    } catch (Exception e) {
+      System.err.println(
+          "Exception can not connect to scheduler socket, schedulerIP="
+              + schedulerIP
+              + ", schedulerPort="
+              + schedulerPort);
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -193,7 +252,16 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
 
     // If the start method was not called, listenerThread may be null
     if (listenerThread != null) {
-      listenerThread.interrupt();
+      try {
+        socket.close();
+        listenerThread.join();
+      } catch (InterruptedException e) {
+        System.err.println("Cant join Thread listenToSocket");
+        e.printStackTrace();
+      } catch (IOException e) {
+        System.err.println("Cant close Socket");
+        e.printStackTrace();
+      }
     }
   }
 
