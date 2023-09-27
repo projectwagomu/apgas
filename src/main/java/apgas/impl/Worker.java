@@ -17,27 +17,28 @@ import java.util.concurrent.ForkJoinWorkerThread;
 /** The {@link Worker} class implements a worker thread. */
 public final class Worker extends ForkJoinWorkerThread {
 
-	private final int myID;
-	/** The current task. */
-	Task task;
+  private final int myID;
 
-	/**
-	 * Instantiates a Worker operating in the given pool.
-	 *
-	 * @param pool the pool this worker works in
-	 * @param id   integer identifier for this worker
-	 */
-	protected Worker(ForkJoinPool pool, int id) {
-		super(pool);
-		myID = id;
-	}
+  /** The current task. */
+  Task task;
 
-	/**
-	 * Obtain the id for this worker
-	 *
-	 * @return this id of this worker
-	 */
-	public int getMyID() {
-		return myID;
-	}
+  /**
+   * Instantiates a Worker operating in the given pool.
+   *
+   * @param pool the pool this worker works in
+   * @param id integer identifier for this worker
+   */
+  Worker(ForkJoinPool pool, int id) {
+    super(pool);
+    myID = id;
+  }
+
+  /**
+   * Obtain the id for this worker
+   *
+   * @return this id of this worker
+   */
+  public int getMyID() {
+    return myID;
+  }
 }

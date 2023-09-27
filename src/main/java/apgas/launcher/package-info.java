@@ -10,7 +10,7 @@
  */
 
 /**
- * The {@link apgas.launcher} package contains various launcher alternatives
- * that can be used when spawning new places
+ * The {@link apgas.launcher} package contains various launcher alternatives that can be used when
+ * spawning new places
  */
 package apgas.launcher;

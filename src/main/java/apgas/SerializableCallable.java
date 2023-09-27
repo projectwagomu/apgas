@@ -15,17 +15,15 @@ import java.io.Serializable;
 import java.util.concurrent.Callable;
 
 /**
- * A generic serializable functional interface with no arguments and a return
- * value.
+ * A generic serializable functional interface with no arguments and a return value.
  *
- * <p>
- * The functional method is {@link #call()}.
+ * <p>The functional method is {@link #call()}.
  *
  * @param <T> the type of the result
  */
 @FunctionalInterface
 public interface SerializableCallable<T> extends Serializable, Callable<T> {
 
-	@Override
-	T call() throws Exception;
+  @Override
+  T call() throws Exception;
 }

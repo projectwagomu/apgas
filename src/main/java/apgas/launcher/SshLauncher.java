@@ -17,23 +17,23 @@ import java.util.List;
 /** The {@link SshLauncher} class implements a launcher using ssh. */
 public class SshLauncher extends RemoteLauncher {
 
-	@Override
-	void startRemote(List<String> command, boolean verbose, String hostAddress) {
-		command.add(0, "ssh");
-		command.add(1, "-t");
-		command.add(2, "-t");
-		command.add(3, hostAddress);
-		if (verbose) {
-			System.err.println("[APGAS] Spawning new place: " + String.join(" ", command));
-		}
-		try {
-			super.process = super.processBuilder.start();
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-		command.remove(0);
-		command.remove(0);
-		command.remove(0);
-		command.remove(0);
-	}
+  @Override
+  void startRemote(List<String> command, boolean verbose, String hostAddress) {
+    command.add(0, "ssh");
+    command.add(1, "-t");
+    command.add(2, "-t");
+    command.add(3, hostAddress);
+    if (verbose) {
+      System.err.println("[APGAS] Spawning new place: " + String.join(" ", command));
+    }
+    try {
+      super.process = super.processBuilder.start();
+    } catch (final IOException e) {
+      e.printStackTrace();
+    }
+    command.remove(0);
+    command.remove(0);
+    command.remove(0);
+    command.remove(0);
+  }
 }
