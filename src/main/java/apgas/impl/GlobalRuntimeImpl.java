@@ -40,12 +40,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -899,7 +894,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
       return null;
     }
     if (verboseLauncher) {
-      System.err.println("[APGAS] shuting down " + toBeRemoved);
+      System.err.println("[APGAS] shutting down " + toBeRemoved);
     }
     final ArrayList<String> removedHosts = new ArrayList<>();
 
@@ -940,43 +935,23 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
    * @return the name of the hosts of freed processes in a list
    */
   public List<String> shutdownMallPlacesBlocking(List<Place> toRelease) {
-    List<String> freedHosts = null;
+    final boolean allAtOnce = Configuration.APGAS_ELASTIC_ALLATONCE.get();
+    List<String> freedHosts = new ArrayList<>();
     synchronized (MALLEABILITY_SYNC) {
-      final int initialPlacesCount = places.size();
-      final int expectedPlacesCount = initialPlacesCount - toRelease.size();
-      freedHosts = shutdownMallPlaces(toRelease);
-
-      // Wait on place 0 for the number of places to reach the expected level
-      waitForNewPlacesCount(expectedPlacesCount);
-
-      // Make sure all the other places are also informed of the change in the number
-      // of processes
-      final GlobalRef<CountDownLatch> globalRef =
-          new GlobalRef<>(new CountDownLatch(expectedPlacesCount - 1));
-      for (final Place p : places()) {
-        if (p.id == here().id || toRelease.contains(p)) {
-          continue;
+      if (allAtOnce) {
+        final int initialPlacesCount = places.size();
+        final int expectedPlacesCount = initialPlacesCount - toRelease.size();
+        freedHosts.addAll(shutdownMallPlaces(toRelease));
+        waitForNewPlacesCount(expectedPlacesCount);
+        notifyOtherPlaces(expectedPlacesCount, toRelease);
+      } else {
+        for (Place placeToRelease : toRelease) {
+          final int initialPlacesCount = places.size();
+          final int expectedPlacesCount = initialPlacesCount - 1;
+          freedHosts.addAll(shutdownMallPlaces(Collections.singletonList(placeToRelease)));
+          waitForNewPlacesCount(expectedPlacesCount);
+          notifyOtherPlaces(expectedPlacesCount, Collections.singletonList(placeToRelease));
         }
-        final boolean verbose = verboseLauncher;
-        immediateAsyncAt(
-            p,
-            () -> {
-              if (verbose) {
-                System.err.println(p + " was informed of the reduction in the number of hosts");
-              }
-              GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
-              GlobalRuntimeImpl.getRuntime()
-                  .immediateAsyncAt(
-                      globalRef.home(),
-                      () -> {
-                        globalRef.get().countDown();
-                      });
-            });
-      }
-      try {
-        globalRef.get().await();
-      } catch (final InterruptedException e) {
-        e.printStackTrace();
       }
     }
     return freedHosts;
@@ -1019,49 +994,72 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
    * @return list of integers containing the ids of the newly spawned places
    */
   public List<Integer> startMallPlacesBlocking(int n, List<String> hosts) {
+    final boolean allAtOnce = Configuration.APGAS_ELASTIC_ALLATONCE.get();
+
     for (final String host : hosts) {
       hostManager.addHost(host);
     }
     synchronized (MALLEABILITY_SYNC) {
+      final List<Integer> newPlaceIDs = allAtOnce ? new ArrayList<>() : null;
       final int initialPlacesCount = places.size();
-      final int expectedPlacesCount = initialPlacesCount + n;
-      final Future<List<Integer>> listFuture = startMallPlaces(n, expectedPlacesCount);
-      // wait on place 0
-      waitForNewPlacesCount(expectedPlacesCount);
+      final int expectedPlacesCount = initialPlacesCount + (allAtOnce ? n : 1);
+      Future<List<Integer>> listFuture = null;
 
-      // wait on all other places
-      final GlobalRef<CountDownLatch> globalRef =
-          new GlobalRef<>(new CountDownLatch(places().size() - 1));
-      for (final Place p : places()) {
-        if (p.id == here().id) {
-          continue;
+      for (int i = 0; i < (allAtOnce ? 1 : n); i++) {
+        if (!allAtOnce || listFuture == null) {
+          listFuture = startMallPlaces(allAtOnce ? n : 1, expectedPlacesCount);
         }
-        immediateAsyncAt(
-            p,
-            () -> {
-              GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
-              GlobalRuntimeImpl.getRuntime()
-                  .immediateAsyncAt(
-                      globalRef.home(),
-                      () -> {
-                        globalRef.get().countDown();
-                      });
-            });
-      }
-      try {
-        globalRef.get().await();
-      } catch (final InterruptedException e) {
-        e.printStackTrace();
+        waitForNewPlacesCount(expectedPlacesCount);
+        notifyOtherPlaces(expectedPlacesCount, Collections.emptyList());
+
+        if (!allAtOnce) {
+          try {
+            newPlaceIDs.addAll(listFuture.get());
+          } catch (final InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+          }
+        }
       }
 
-      if (listFuture != null) {
+      if (allAtOnce && listFuture != null) {
         try {
           return listFuture.get();
         } catch (final InterruptedException | ExecutionException e) {
           e.printStackTrace();
         }
       }
-      return Collections.emptyList();
+
+      return newPlaceIDs != null ? newPlaceIDs : Collections.emptyList();
+    }
+  }
+
+  private void notifyOtherPlaces(int expectedPlacesCount, List<Place> toRelease) {
+    final GlobalRef<CountDownLatch> globalRef =
+        new GlobalRef<>(new CountDownLatch(expectedPlacesCount - 1));
+    for (final Place p : places()) {
+      if (p.id == here().id || (toRelease.contains(p))) {
+        continue;
+      }
+      final boolean verbose = verboseLauncher;
+      immediateAsyncAt(
+          p,
+          () -> {
+            if (verbose) {
+              System.err.println(p + " was informed of the reduction in the number of hosts");
+            }
+            GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
+            GlobalRuntimeImpl.getRuntime()
+                .immediateAsyncAt(
+                    globalRef.home(),
+                    () -> {
+                      globalRef.get().countDown();
+                    });
+          });
+    }
+    try {
+      globalRef.get().await();
+    } catch (final InterruptedException e) {
+      e.printStackTrace();
     }
   }
 

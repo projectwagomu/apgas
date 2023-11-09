@@ -62,6 +62,18 @@ public final class Configuration<T> {
   public static final String APGAS_ELASTIC_PROPERTY = "apgas.elastic";
 
   /**
+   * This Boolean is used to define the property setting which indicated if the elastic place
+   * changes are performed all at once or one after the other. I.e., add/remove n places together,
+   * or add/remove n * 1 place one after the other.
+   *
+   * <ul>
+   *   <li>false: (default), extra save elastic place changes
+   *   <li>true: faster elastic place changes
+   * </ul>
+   */
+  public static final String APGAS_ELASTIC_ALLATONCE_PROPERTY = "apgas.elastic.allatonce";
+
+  /**
    * Property {@value #APGAS_HOSTFILE_PROPERTY} specifies a filename that lists hosts on which to
    * launch places (String property).
    */
@@ -189,6 +201,10 @@ public final class Configuration<T> {
    */
   public static final Configuration<String> CONFIG_APGAS_ELASTIC =
       new Configuration<>(APGAS_ELASTIC_PROPERTY, APGAS_ELASTIC_FIXED, String.class);
+
+  /** Property defining if elastic place changes are performed all at once or one after the other */
+  public static final Configuration<Boolean> APGAS_ELASTIC_ALLATONCE =
+      new Configuration<>(APGAS_ELASTIC_ALLATONCE_PROPERTY, false, Boolean.class);
 
   /** Configuration object for {@link #APGAS_HOSTFILE_PROPERTY} */
   public static final Configuration<String> CONFIG_APGAS_HOSTFILE =
