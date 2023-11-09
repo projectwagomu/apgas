@@ -10,11 +10,10 @@
  */
 package apgas.impl.elastic;
 
-import java.io.Serializable;
-import java.util.List;
-
 import apgas.Constructs;
 import apgas.Place;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * Interface which defines what to do when a malleable (shrink or grow) order comes from the

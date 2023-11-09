@@ -13,15 +13,14 @@ package apgas.impl;
 
 import static apgas.Constructs.here;
 
+import apgas.DeadPlaceException;
+import apgas.SerializableJob;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
-
-import apgas.DeadPlaceException;
-import apgas.SerializableJob;
 
 /**
  * The {@link Task} class represents an APGAS task.
