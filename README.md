@@ -46,14 +46,14 @@ In Maven:
 <dependency>
   <groupId>com.github.projectwagomu</groupId>
   <artifactId>apgas</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
 </dependency>
 ```
 
 In Gradle:
 
 ```
-compile 'com.github.projectwagomu:apgas:0.0.1'
+compile 'com.github.projectwagomu:apgas:0.0.2'
 ```
 
 Note that you will need to *install* this project to your local Maven repository beforehand for the methods described above to work (refer to the build instructions above).
