@@ -935,7 +935,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
    * @return the name of the hosts of freed processes in a list
    */
   public List<String> shutdownMallPlacesBlocking(List<Place> toRelease) {
-    final boolean allAtOnce = Configuration.APGAS_ELASTIC_ALLATONCE.get();
+    final boolean allAtOnce = Configuration.CONFIG_APGAS_ELASTIC_ALLATONCE.get();
     List<String> freedHosts = new ArrayList<>();
     synchronized (MALLEABILITY_SYNC) {
       if (allAtOnce) {
@@ -994,42 +994,36 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
    * @return list of integers containing the ids of the newly spawned places
    */
   public List<Integer> startMallPlacesBlocking(int n, List<String> hosts) {
-    final boolean allAtOnce = Configuration.APGAS_ELASTIC_ALLATONCE.get();
+    hosts.forEach(hostManager::addHost);
+    final boolean allAtOnce = Configuration.CONFIG_APGAS_ELASTIC_ALLATONCE.get();
 
-    for (final String host : hosts) {
-      hostManager.addHost(host);
-    }
     synchronized (MALLEABILITY_SYNC) {
-      final List<Integer> newPlaceIDs = allAtOnce ? new ArrayList<>() : null;
-      final int initialPlacesCount = places.size();
-      final int expectedPlacesCount = initialPlacesCount + (allAtOnce ? n : 1);
-      Future<List<Integer>> listFuture = null;
+      try {
+        List<Integer> newPlaceIDs = new ArrayList<>();
+        int totalPlaces = n;
+        int increments = 1;
 
-      for (int i = 0; i < (allAtOnce ? 1 : n); i++) {
-        if (!allAtOnce || listFuture == null) {
-          listFuture = startMallPlaces(allAtOnce ? n : 1, expectedPlacesCount);
+        if (allAtOnce) {
+          increments = n;
         }
-        waitForNewPlacesCount(expectedPlacesCount);
-        notifyOtherPlaces(expectedPlacesCount, Collections.emptyList());
 
-        if (!allAtOnce) {
-          try {
+        for (int i = 0; i < totalPlaces; i += increments) {
+          int initialPlacesCount = places.size();
+          int expectedPlacesCount = initialPlacesCount + increments;
+          Future<List<Integer>> listFuture = startMallPlaces(increments, expectedPlacesCount);
+
+          waitForNewPlacesCount(expectedPlacesCount);
+          notifyOtherPlaces(expectedPlacesCount, Collections.emptyList());
+
+          if (listFuture != null) {
             newPlaceIDs.addAll(listFuture.get());
-          } catch (final InterruptedException | ExecutionException e) {
-            e.printStackTrace();
           }
         }
+        return newPlaceIDs;
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+        return Collections.emptyList();
       }
-
-      if (allAtOnce && listFuture != null) {
-        try {
-          return listFuture.get();
-        } catch (final InterruptedException | ExecutionException e) {
-          e.printStackTrace();
-        }
-      }
-
-      return newPlaceIDs != null ? newPlaceIDs : Collections.emptyList();
     }
   }
 

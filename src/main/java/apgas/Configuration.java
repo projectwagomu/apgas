@@ -203,7 +203,7 @@ public final class Configuration<T> {
       new Configuration<>(APGAS_ELASTIC_PROPERTY, APGAS_ELASTIC_FIXED, String.class);
 
   /** Property defining if elastic place changes are performed all at once or one after the other */
-  public static final Configuration<Boolean> APGAS_ELASTIC_ALLATONCE =
+  public static final Configuration<Boolean> CONFIG_APGAS_ELASTIC_ALLATONCE =
       new Configuration<>(APGAS_ELASTIC_ALLATONCE_PROPERTY, false, Boolean.class);
 
   /** Configuration object for {@link #APGAS_HOSTFILE_PROPERTY} */
@@ -326,6 +326,7 @@ public final class Configuration<T> {
     allConfigs.add(CONFIG_APGAS_CONSOLEPRINTER);
     allConfigs.add(CONFIG_APGAS_HOSTMANAGER_STRATEGY);
     allConfigs.add(CONFIG_APGAS_ELASTIC);
+    allConfigs.add(CONFIG_APGAS_ELASTIC_ALLATONCE);
     allConfigs.add(CONFIG_APGAS_MALLEABLE_COMMUNICATOR);
 
     for (final Configuration<?> c : allConfigs) {
