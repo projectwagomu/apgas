@@ -11,10 +11,11 @@
 
 package apgas;
 
-import apgas.impl.GlobalRuntimeImpl;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
+import apgas.impl.GlobalRuntimeImpl;
 
 /**
  * The {@link GlobalRuntime} class provides mechanisms to initialize and shut down the APGAS global

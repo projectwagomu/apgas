@@ -163,7 +163,11 @@ class ResilientFinish implements Serializable, Finish {
           if (state.getDeads() != null && state.getDeads().contains(p)) {
             // destination place has died, reject task
             System.out.println(
-                here + " DeadPlaceException: destination place has died, reject task p=" + p);
+                "DeadPlaceException: Place "
+                    + here
+                    + " cannot send to Place "
+                    + p
+                    + " destination place has died, reject task.");
             throw new DeadPlaceException(new Place(p));
           }
           state.incr(here, p);

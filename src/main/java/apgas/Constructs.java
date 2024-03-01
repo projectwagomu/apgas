@@ -13,6 +13,8 @@ package apgas;
 
 import apgas.impl.SerializableRunnable;
 import apgas.impl.Worker;
+import apgas.impl.elastic.EvolvingHandler;
+import apgas.impl.elastic.GetLoad;
 import apgas.impl.elastic.MalleableHandler;
 import com.hazelcast.core.Member;
 import java.io.Serializable;
@@ -82,22 +84,36 @@ public final class Constructs {
   }
 
   /**
-   * Method used to define the handler which will be responsible for interacting with the running
-   * program so that it correctly handles the transitions between place count changes. The program
-   * becomes malleable as a result of calling this method. This is because a socket is opened as a
-   * result of this call, effectively making it possible to receive shrink of grow orders from the
-   * job scheduler.
+   * Method used to define the malleable handler which will be responsible for interacting with the
+   * running program so that it correctly handles the transitions between place count changes. The
+   * program becomes malleable as a result of calling this method. This is because a socket is
+   * opened as a result of this call, effectively making it possible to receive shrink of grow
+   * orders from the job scheduler.
    *
    * @param handler the handler now in charge of handling malleable shrink and grow orders from the
    *     job scheduler
    */
-  public static void defineMalleableHandle(MalleableHandler handler) {
+  public static void defineMalleableHandler(MalleableHandler handler) {
     GlobalRuntime.getRuntimeImpl().setMalleableHandler(handler);
   }
 
-  /** Disables the malleable communicator, i.e., the program is no longer malleable. */
-  public static void disableMalleableCommunicator() {
-    GlobalRuntime.getRuntimeImpl().disableMalleableCommunicator();
+  /**
+   * Method used to define the evolving handler which will be responsible for interacting with the
+   * running program so that it correctly handles the transitions between place count changes. The
+   * program becomes evolving as a result of calling this method. This is because a socket is opened
+   * as a result of this call, effectively making it possible to send shrink of grow requests to the
+   * job scheduler.
+   *
+   * @param handler the handler now in charge of sending evolving shrink and grow requests to the
+   *     job scheduler
+   */
+  public static void defineEvolvingHandler(EvolvingHandler handler, GetLoad getLoad) {
+    GlobalRuntime.getRuntimeImpl().setEvolvingHandler(handler, getLoad);
+  }
+
+  /** Disables the elastic communicator, i.e., the program is no longer elastic. */
+  public static void disableElasticCommunicator() {
+    GlobalRuntime.getRuntimeImpl().disableElasticCommunicator();
   }
 
   /**

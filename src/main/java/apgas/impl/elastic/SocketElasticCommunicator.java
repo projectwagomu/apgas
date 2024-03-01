@@ -11,29 +11,37 @@
 package apgas.impl.elastic;
 
 import apgas.Configuration;
+import apgas.Place;
 import apgas.impl.GlobalRuntimeImpl;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Default implementation of {@link MalleableCommunicator} based on a Socket.
+ * Default implementation of {@link ElasticCommunicator} based on a Socket.
  *
  * @author Patrick Finnerty
  */
-public class SocketMalleableCommunicator extends MalleableCommunicator {
+public class SocketElasticCommunicator extends ElasticCommunicator {
 
-  /** Setting to set the IP from which connections may be accepted to receive malleable orders */
-  public static final String SCHEDULER_IP = "malleable_scheduler_ip";
+  /**
+   * Setting to set the IP from which connections may be accepted to receive malleable/evolving
+   * orders
+   */
+  public static final String SCHEDULER_IP = "elastic_scheduler_ip";
 
-  /** Setting to set the port on which connections may be accepted to receive malleable orders */
-  public static final String SCHEDULER_Port = "malleable_scheduler_port";
+  /**
+   * Setting to set the port on which connections may be accepted to receive malleable/evolving
+   * orders
+   */
+  public static final String SCHEDULER_Port = "elastic_scheduler_port";
 
   /** Value of property {@link #SCHEDULER_IP} for this execution */
   private final String schedulerIP;
@@ -63,28 +71,28 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
   private volatile boolean listening = true;
 
   /**
-   * Socket of malleable connections
+   * Socket of malleable/evolving connections
    *
-   * <p>This socket is kept as a member for cases whereas malleable "shrink" order is received and
-   * the hosts that were released need to be sent to the scheduler.
+   * <p>This socket is kept as a member for cases whereas malleable/evolving "shrink" order is
+   * received and the hosts that were released need to be sent to the scheduler.
    */
   private Socket socket = null;
 
   /**
    * Constructor
    *
-   * <p>The SocketMalleableCommunicator users the properties {@link #SCHEDULER_IP} and {@link
+   * <p>The SocketElasticCommunicator users the properties {@link #SCHEDULER_IP} and {@link
    * #SCHEDULER_Port} to initialize its socket. This constructor is called using reflection as part
-   * of a malleable APGAS execution.
+   * of a malleable or evolving APGAS execution.
    *
    * @throws Exception if thrown during the socket setup.
    */
-  public SocketMalleableCommunicator() throws Exception {
+  public SocketElasticCommunicator() throws Exception {
     // Obtain the IP/Port of the scheduler to establish a connection
     final Properties props = System.getProperties();
     if (!props.containsKey(SCHEDULER_IP) || !props.containsKey(SCHEDULER_Port)) {
       throw new Exception(
-          "Cannot create the SocketMalleableCommunicator, either the IP or the port of the scheduler was not set");
+          "Cannot create the SocketElasticCommunicator, either the IP or the port of the scheduler was not set");
     }
     schedulerIP = System.getProperty(SCHEDULER_IP);
     // local:
@@ -137,7 +145,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
             new BufferedReader(new InputStreamReader(socket.getInputStream()));
         final String line = reader.readLine();
         if (verbose) {
-          System.out.println("SocketMalleableCommunicator received: " + line);
+          System.out.println("SocketElasticCommunicator received: " + line);
         }
 
         if (!listening) break;
@@ -147,16 +155,21 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
           final String order = str[0];
           final int change = Integer.parseInt(str[1]);
           if (order.equals("shrink")) {
-            long before = System.nanoTime();
-            super.malleableShrink(change);
-            long shrinkTime = System.nanoTime() - before;
-            sendToScheduler("shrinkTimeAPGAS;" + change + ";" + shrinkTime);
+            if (Configuration.CONFIG_APGAS_ELASTIC.get().equals("evolving")) {
+              final ArrayList<Place> placeToShrink = new ArrayList<>();
+              placeToShrink.add(GlobalRuntimeImpl.getRuntime().place(change));
+              super.evolvingShrink(placeToShrink);
+            } else {
+              long before = System.nanoTime();
+              super.malleableShrink(change);
+              long shrinkTime = System.nanoTime() - before;
+              sendToScheduler("shrinkTimeAPGAS;" + change + ";" + shrinkTime);
+            }
           } else if (order.equals("grow")) {
             final List<String> hostnames = new ArrayList<>();
             hostnames.addAll(Arrays.asList(str).subList(2, change + 2));
-
             long before = System.nanoTime();
-            super.malleableGrow(change, hostnames);
+            super.elasticGrow(change, hostnames);
             long growTime = System.nanoTime() - before;
             sendToScheduler("growTimeAPGAS;" + change + ";" + growTime);
           } else {
@@ -165,6 +178,9 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
                     + str[0]
                     + ", expected <shrink> or <grow>. Ignoring ...");
           }
+          // We only allow one elastic change per second,
+          // which makes the runtime system much more stable
+          TimeUnit.SECONDS.sleep(1);
         }
       } catch (SocketException | NullPointerException ignored) {
         System.err.println("Socket was Closed");
@@ -176,21 +192,18 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
   }
 
   /**
-   * For class {@link SocketMalleableCommunicator}, starting means forking a thread to listen to
+   * For class {@link SocketElasticCommunicator}, starting means forking a thread to listen to
    * incoming requests from the scheduler.
    */
   @Override
   public void start() throws Exception {
     if (verbose) {
       System.err.println(
-          "SocketMalleableCommunicator start() method called, opening socket to listen to "
+          "SocketElasticCommunicator start() method called, opening socket to listen to "
               + serverSocketIP
               + ":"
               + serverSocketPort);
-
-      System.err.println("Have Scheduler Connection " + schedulerIP + ":" + schedulerPort);
     }
-
     // We now fork a thread to listen to the socket and call the relevant method
     // when an order from the scheduler is received.
     listenerThread = new Thread(this::listenToSocket);
@@ -236,14 +249,14 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
   }
 
   /**
-   * For class {@link SocketMalleableCommunicator}, stopping consists in interrupting the thread
+   * For class {@link SocketElasticCommunicator}, stopping consists in interrupting the thread
    * listening for requests from the scheduler and cleaning up the objects used for communications.
    */
   @Override
   public void stop() {
     if (verbose) {
       System.err.println(
-          SocketMalleableCommunicator.class.getName()
+          SocketElasticCommunicator.class.getName()
               + " stop() method called, closing socket and cleaning up.");
     }
 
@@ -269,7 +282,7 @@ public class SocketMalleableCommunicator extends MalleableCommunicator {
   public void interrupt() {
     if (verbose) {
       System.err.println(
-          SocketMalleableCommunicator.class.getName()
+          SocketElasticCommunicator.class.getName()
               + " stop() method called, closing socket and cleaning up.");
     }
 

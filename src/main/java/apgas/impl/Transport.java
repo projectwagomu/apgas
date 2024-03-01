@@ -15,7 +15,6 @@ import apgas.Configuration;
 import apgas.DeadPlaceException;
 import apgas.Place;
 import apgas.util.BadPlaceException;
-import apgas.util.ConsolePrinter;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.InMemoryFormat;
 import com.hazelcast.config.JoinConfig;
@@ -97,7 +96,7 @@ public class Transport implements InitialMembershipListener {
 
     // Partition count must be the same for all hazelcast members
     // Thus, we use this only for fixed runs, i.e., especially for fault tolerance
-    if (Configuration.CONFIG_APGAS_ELASTIC.equals(Configuration.APGAS_ELASTIC_FIXED)) {
+    if (Configuration.CONFIG_APGAS_ELASTIC.get().equals(Configuration.APGAS_ELASTIC_FIXED)) {
       config.setProperty(
           "hazelcast.partition.count", String.valueOf(Configuration.CONFIG_APGAS_PLACES.get()));
     }
@@ -219,9 +218,6 @@ public class Transport implements InitialMembershipListener {
 
   @Override
   public synchronized void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
-    // TODO Jonas weird "a new place was added?"
-    ConsolePrinter.getInstance().printlnAlways("weird memberAttributeChanged call from Hazelcast");
-    ConsolePrinter.getInstance().printlnAlways(memberAttributeEvent.toString());
     addPlace(memberAttributeEvent.getMember());
   }
 
@@ -308,6 +304,7 @@ public class Transport implements InitialMembershipListener {
     try {
       hazelcast = Hazelcast.newHazelcastInstance(config);
       me = hazelcast.getCluster().getLocalMember();
+
       executor = hazelcast.getExecutorService(APGAS_EXECUTOR);
     } catch (final Throwable t) {
       System.err.println(

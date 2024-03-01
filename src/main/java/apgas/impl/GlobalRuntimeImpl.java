@@ -19,10 +19,10 @@ import apgas.Place;
 import apgas.SerializableCallable;
 import apgas.SerializableJob;
 import apgas.impl.Finish.Factory;
-import apgas.impl.elastic.MalleableCommunicator;
-import apgas.impl.elastic.MalleableHandler;
+import apgas.impl.elastic.*;
 import apgas.launcher.Launcher;
 import apgas.launcher.SshLauncher;
+import apgas.util.ConsolePrinter;
 import apgas.util.GlobalID;
 import apgas.util.GlobalRef;
 import apgas.util.MyForkJoinPool;
@@ -65,8 +65,17 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
   private static GlobalRuntimeImpl runtime;
 
+  /** Only used on place 0, manages the relation between hosts and places */
+  public final HostManager hostManager;
+
   /** Indicates if the instance is ready */
   public final boolean ready;
+
+  /** Startup time for grow/shrink timings */
+  public final long startupTime;
+
+  /** The pool for this global runtime instance. */
+  public final MyForkJoinPool pool;
 
   /** This place's ID. */
   final int here;
@@ -76,9 +85,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
   /** The initial number of places */
   final int initialPlaces;
-
-  /** The pool for this global runtime instance. */
-  final MyForkJoinPool pool;
 
   /** The resilient map from finish IDs to finish states. */
   final IMap<GlobalID, ResilientFinishState> resilientFinishMap;
@@ -95,9 +101,6 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
   /** This place. */
   private final Place home;
 
-  /** Only used on place 0, manages the relation between hosts and places */
-  private final HostManager hostManager;
-
   /** Flag that indicates that this Place is the Master */
   private final boolean isMaster;
 
@@ -111,12 +114,31 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
   private final boolean resilient;
 
   /**
-   * The unit in charge of communicating with the scheduler to receive incoming malleable requests
+   * Evolving object for getting the type of load collection, setting places inactive and start
+   * obtaining load when a new place starts.
    */
-  public transient MalleableCommunicator malleableCommunicator;
+  public EvolvingMonitor EVOLVING;
 
-  /** The handler set by the user in charge of informing the running program of incoming changes */
+  /** Place lock - a locked place cannot be shrunk. */
+  public boolean allowShrink;
+
+  /**
+   * The unit in charge of communicating with the scheduler to receive incoming malleable or
+   * evolving requests
+   */
+  public transient ElasticCommunicator elasticCommunicator;
+
+  /**
+   * The malleable handler set by the user in charge of informing the running program of incoming
+   * changes
+   */
   public transient MalleableHandler malleableHandler;
+
+  /**
+   * The evolving handler set by the user in charge of informing the running program of incoming
+   * changes
+   */
+  public transient EvolvingHandler evolvingHandler;
 
   /** The time of the last place failure. */
   Long failureTime;
@@ -162,12 +184,14 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
     initialPlaces = Configuration.CONFIG_APGAS_PLACES.get();
     verboseLauncher = Configuration.CONFIG_APGAS_VERBOSE_LAUNCHER.get();
     final String elasticityMode = Configuration.CONFIG_APGAS_ELASTIC.get();
-    if (elasticityMode.equals("malleable")) {
+    if (elasticityMode.equals(Configuration.APGAS_ELASTIC_MALLEABLE)
+        || elasticityMode.equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
       resilient = true;
       Configuration.CONFIG_APGAS_RESILIENT.set(true);
     } else {
       resilient = Configuration.CONFIG_APGAS_RESILIENT.get();
     }
+
     final int maxThreads = Configuration.CONFIG_APGAS_MAX_THREADS.get();
     final int backupCount = Configuration.CONFIG_APGAS_BACKUPCOUNT.get();
     final int placeID = Configuration.CONFIG_APGAS_PLACE_ID.get();
@@ -175,6 +199,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
     if (verboseLauncher) {
       System.err.println("JVM of Place " + placeID + " started");
     }
+
+    this.allowShrink = placeID != 0;
 
     ip = selectGoodIPForHost();
 
@@ -217,12 +243,14 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
     }
 
     // Initialize elastic communicator if need be
-    if (elasticityMode.equals(Configuration.APGAS_ELASTIC_MALLEABLE) && isMaster) {
-      // The runtime is malleable, need to initialize the malleable communicator
-      final String communicatorClassName = Configuration.CONFIG_APGAS_MALLEABLE_COMMUNICATOR.get();
+    if ((elasticityMode.equals(Configuration.APGAS_ELASTIC_MALLEABLE)
+            || elasticityMode.equals(Configuration.APGAS_ELASTIC_EVOLVING))
+        && isMaster) {
+      // The runtime is malleable or evolving, need to initialize the elastic communicator
+      final String communicatorClassName = Configuration.CONFIG_APGAS_ELASTIC_COMMUNICATOR.get();
       try {
-        malleableCommunicator =
-            (MalleableCommunicator)
+        elasticCommunicator =
+            (ElasticCommunicator)
                 Class.forName(communicatorClassName).getDeclaredConstructor().newInstance();
       } catch (InstantiationException
           | IllegalAccessException
@@ -232,7 +260,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
           | SecurityException
           | ClassNotFoundException e) {
         System.err.println(
-            "Something went wrong when trying to instanciate malleable communicator "
+            "Something went wrong when trying to instantiate elastic communicator "
                 + communicatorClassName);
         e.printStackTrace();
         System.err.println(
@@ -240,8 +268,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
       }
       if (verboseLauncher) {
         System.err.println(
-            "Initialized Malleable Communicator "
-                + malleableCommunicator.getClass().getCanonicalName());
+            "Initialized Elastic Communicator "
+                + elasticCommunicator.getClass().getCanonicalName());
       }
     }
 
@@ -262,6 +290,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
       System.out.println(
           "[APGAS] Place startup time: " + (System.nanoTime() - begin) / 1E9 + " sec");
     }
+    startupTime = System.nanoTime();
   }
 
   private static Worker currentWorker() {
@@ -373,28 +402,27 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
     Constructs.finish(() -> Constructs.asyncAt(p, f));
   }
 
-  /** Sub-routine called in case the malleable communicator fails for some reason. */
-  public void disableMalleableCommunicator() {
-    System.err.println("The Malleable Communicator will be stopped");
-    synchronized (malleableCommunicator.lock) {
+  /** Subroutine called in case the malleable communicator fails for some reason. */
+  public void disableElasticCommunicator() {
+    System.err.println("The Elastic Communicator will be stopped");
+    synchronized (elasticCommunicator.lock) {
       try {
-        malleableCommunicator.interrupt();
+        elasticCommunicator.interrupt();
       } catch (final Exception e) {
-        System.err.println(
-            "An error occurred while trying to shut down the malleable communicator");
+        System.err.println("An error occurred while trying to shut down the elastic communicator");
         e.printStackTrace();
       } finally {
-        malleableCommunicator = null;
+        elasticCommunicator = null;
         malleableHandler = null;
       }
     }
   }
 
   public void sendToScheduler(final String message) {
-    if (malleableCommunicator == null) {
+    if (elasticCommunicator == null) {
       System.err.println("sendToScheduler : malleableCommunicator is null");
     } else {
-      malleableCommunicator.sendToScheduler(message);
+      elasticCommunicator.sendToScheduler(message);
     }
   }
 
@@ -674,7 +702,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
   private void reduceReadyCounter() {
     if (here != 0) {
       if (verboseLauncher) {
-        System.err.println("[APGAS] " + here + " sends ready to place 0");
+        System.out.println("[APGAS] place(" + here + ") sends ready to place(0)");
       }
       final int _h = here;
       try {
@@ -685,8 +713,11 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
                 () -> {
                   final int value = GlobalRuntime.readyCounter.decrementAndGet();
                   if (_verboseLauncher) {
-                    System.err.println(
-                        "[APGAS] " + _h + " on place 0 decremented ready counter, is now " + value);
+                    System.out.println(
+                        "[APGAS] place("
+                            + _h
+                            + ") decremented readyCounter on place which is now "
+                            + value);
                   }
                 }));
       } catch (final Throwable e) {
@@ -797,7 +828,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
   }
 
   /**
-   * Used to define the handler for malleable programs
+   * Used to define the handler for malleable programs.
    *
    * @param handler the handler to use from now on.
    */
@@ -811,12 +842,12 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
               + here
               + "). The malleable handler should only be set on place(0)");
     }
-    if (malleableCommunicator == null) {
+    if (elasticCommunicator == null) {
       // Either initialization failed or you forgot to set and this program
       // "malleable".
       // Either way this program is effectively fixed, making defining the malleable
       // handler redundant"
-      throw new RuntimeException("The malleable communicator was not instanciated");
+      throw new RuntimeException("The elastic communicator was not instanciated");
     }
     if (malleableHandler != null) {
       throw new RuntimeException("The malleable handler is already set, ignoring");
@@ -825,10 +856,86 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
     // Starting the communicator
     try {
-      malleableCommunicator.start();
+      elasticCommunicator.start();
     } catch (final Exception e) {
       e.printStackTrace();
-      disableMalleableCommunicator();
+      disableElasticCommunicator();
+    }
+  }
+
+  /**
+   * Used to define the handler for evolving programs
+   *
+   * @param handler the handler to use from now on.
+   */
+  public synchronized void setEvolvingHandler(EvolvingHandler handler, GetLoad load) {
+    if (verboseLauncher) {
+      System.err.println("Setting evolving handler " + handler.getClass().getCanonicalName());
+    }
+    if (here != 0) {
+      throw new RuntimeException(
+          "Attempted to set the evolving handler on place("
+              + here
+              + "). The evolving handler should only be set on place(0)");
+    }
+    if (elasticCommunicator == null) {
+      // Either initialization failed or you forgot to set and this program
+      // "evolving".
+      // Either way this program is effectively fixed, making defining the evolving
+      // handler redundant"
+      throw new RuntimeException("The elastic communicator was not instantiated");
+    }
+    if (evolvingHandler != null) {
+      throw new RuntimeException("The evolving handler is already set, ignoring");
+    }
+    evolvingHandler = handler;
+
+    // Starting the communicator
+    try {
+      elasticCommunicator.start();
+    } catch (final Exception e) {
+      e.printStackTrace();
+      disableElasticCommunicator();
+    }
+
+    // Activate evolving mode if program is set to evolving
+    if (GlobalRuntimeImpl.getRuntime() != null) {
+      final GlobalRef<CountDownLatch> globalRef =
+          new GlobalRef<>(new CountDownLatch(places.size()));
+      for (final Place p : places) {
+        if (p.id == here().id) {
+          GlobalRuntimeImpl.getRuntime().EVOLVING = new EvolvingMonitor();
+          globalRef.get().countDown();
+          continue;
+        }
+        GlobalRuntimeImpl.getRuntime()
+            .immediateAsyncAt(
+                p,
+                () -> {
+                  GlobalRuntimeImpl.getRuntime().EVOLVING = new EvolvingMonitor();
+                  GlobalRuntimeImpl.getRuntime()
+                      .immediateAsyncAt(
+                          globalRef.home(),
+                          () -> {
+                            globalRef.get().countDown();
+                          });
+                });
+      }
+
+      try {
+        globalRef.get().await();
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+
+      if (Configuration.CONFIG_APGAS_VERBOSE_LAUNCHER.get()) {
+        long time = startupTime - System.nanoTime();
+        ConsolePrinter.getInstance()
+            .printlnAlways(
+                "[Evolving] Evolving mode activated " + (time / 1e9) + " seconds after startup.");
+      }
+      // Start evolving mode by calling evolve method
+      GlobalRuntimeImpl.getRuntime().EVOLVING.evolve(load);
     }
   }
 
@@ -844,6 +951,13 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
   @Override
   public void shutdown() {
+    // Stop evolving workflow on Place 0 before place 0 gets to shut down.
+    if (here == 0) {
+      if (Configuration.CONFIG_APGAS_ELASTIC.get().equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
+        EVOLVING.placeActive = false;
+      }
+    }
+
     synchronized (this) {
       if (dying) {
         return;
@@ -851,9 +965,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
       dying = true;
     }
     // Shutdown was decided. Before anything else, we stop receiving grow/shrink
-    // orders from the scheduler (if running in malleable mode)
-    if (malleableCommunicator != null) {
-      malleableCommunicator.stop();
+    // orders from the scheduler (if running in malleable or evolving mode)
+    if (elasticCommunicator != null) {
+      elasticCommunicator.stop();
     }
 
     // Run the shutdown handler if it was defined
@@ -874,13 +988,13 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
     // Exit
     if (verboseLauncher) {
-      System.err.println("place(" + here + ") is shutting down.");
+      ConsolePrinter.getInstance().printlnAlways("place(" + here + ") is shutting down.");
     }
     System.exit(0);
   }
 
   /**
-   * Sub routine used to launch the shutdown of the places given as parameter.
+   * Subroutine used to launch the shutdown of the places given as parameter.
    *
    * @param toBeRemoved list of places to release
    * @return the name of the hosts of freed processes in a list
@@ -929,7 +1043,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
   /**
    * Procedure used to release the places given as parameter. This procedure is called by the {@link
-   * MalleableCommunicator} after calling the pre-hook provided by the programmer
+   * ElasticCommunicator} after calling the pre-hook provided by the programmer
    *
    * @param toRelease list of places to release
    * @return the name of the hosts of freed processes in a list
@@ -994,7 +1108,11 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
    * @return list of integers containing the ids of the newly spawned places
    */
   public List<Integer> startMallPlacesBlocking(int n, List<String> hosts) {
-    hosts.forEach(hostManager::addHost);
+    // Add all available hosts to the hostManager for the whole program execution.
+    // TODO: This needs to be changed when adding Job Scheduler support. 
+    if (!Configuration.CONFIG_APGAS_ELASTIC.get().equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
+      hosts.forEach(hostManager::addHost);
+    }
     final boolean allAtOnce = Configuration.CONFIG_APGAS_ELASTIC_ALLATONCE.get();
 
     synchronized (MALLEABILITY_SYNC) {
@@ -1039,7 +1157,8 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
           p,
           () -> {
             if (verbose) {
-              System.err.println(p + " was informed of the reduction in the number of hosts");
+        		  ConsolePrinter.getInstance().printlnAlways(
+                    p + " was informed about the new place count of " + expectedPlacesCount);
             }
             GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
             GlobalRuntimeImpl.getRuntime()
@@ -1192,7 +1311,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
         System.out.println(
             "[APGAS] Place("
                 + here
-                + "): waiting for malleability, places().size()="
+                + "): waiting for elasticity, places().size()="
                 + places().size()
                 + ", expectedPlacesCount="
                 + expectedPlacesCount);
@@ -1204,13 +1323,14 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
       }
     }
     if (verboseLauncher) {
-      System.out.println(
-          "[APGAS] Place("
-              + here
-              + "): waiting for malleability DONE, places().size()="
-              + places().size()
-              + ", expectedPlacesCount="
-              + expectedPlacesCount);
+      ConsolePrinter.getInstance()
+          .printlnAlways(
+              "[APGAS] Place("
+                  + here
+                  + "): Wait for new place finished, places().size()="
+                  + places().size()
+                  + ", expectedPlacesCount="
+                  + expectedPlacesCount);
     }
   }
 }

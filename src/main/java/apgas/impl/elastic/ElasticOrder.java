@@ -16,12 +16,12 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- * Simple main used to send malleable shrink/grow orders to a running malleable APGAS program using
- * the {@link SocketMalleableCommunicator} as the communicator
+ * Simple main used to send shrink/grow orders to a running malleable/evolving APGAS program using
+ * the {@link SocketElasticCommunicator} as the communicator
  *
  * @author Kanzaki
  */
-public class MalleableOrder {
+public class ElasticOrder {
 
   private static final String DEFAULT_IP = "127.0.0.1";
   private static final String DEFAULT_PORT = "8081";
@@ -31,7 +31,7 @@ public class MalleableOrder {
 
   /**
    * This main takes different arguments depending on the type of order to sent to the running
-   * malleable program.<br>
+   * elastic program.<br>
    * <strong>shrink case</strong> The arguments expected are:
    *
    * <ul>
@@ -75,7 +75,7 @@ public class MalleableOrder {
         reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         for (int i = 0; i < Integer.parseInt(args[1]); i++) {
           final String line = reader.readLine();
-          System.out.println("[MalleableOrder] The hosts freed were: " + line);
+          System.out.println("[ElasticOrder] The hosts freed were: " + line);
         }
       }
     } catch (final Exception e) {

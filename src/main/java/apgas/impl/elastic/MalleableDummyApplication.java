@@ -8,6 +8,7 @@
  *
  * SPDX-License-Identifier: EPL-1.0
  */
+
 package apgas.impl.elastic;
 
 import static apgas.Constructs.*;
@@ -24,8 +25,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Patrick Finnerty
  */
-public class DummyApplication {
-
+public class MalleableDummyApplication {
   /**
    * Dummy main which performs no computation and just waits till the specified time (in seconds)
    * elapses
@@ -47,7 +47,7 @@ public class DummyApplication {
         });
 
     // Enable malleability by defining the handler
-    defineMalleableHandle(new DummyHandler());
+    defineMalleableHandler(new DummyHandler());
 
     // Start dummy computation for the indicated time
     final long startWait = System.nanoTime();
@@ -58,10 +58,10 @@ public class DummyApplication {
         // Do nothing in case of exception
       }
     }
-    ConsolePrinter.getInstance().printlnAlways("call disableMalleableCommunicator");
+    ConsolePrinter.getInstance().printlnAlways("call disableElasticCommunicator");
 
-    // Disable malleability
-    disableMalleableCommunicator();
+    // Disable elasticity
+    disableElasticCommunicator();
 
     ConsolePrinter.getInstance().printlnAlways("places() : " + Arrays.toString(places().toArray()));
     ConsolePrinter.getInstance().printlnAlways(toElapse + "s have elapsed, quiting");
@@ -70,25 +70,6 @@ public class DummyApplication {
   static class DummyHandler implements MalleableHandler {
 
     private static final long serialVersionUID = 4003743679074722952L;
-
-    @Override
-    public void postGrow(
-        int nbPlaces, List<? extends Place> continuedPlaces, List<? extends Place> newPlaces) {
-      ConsolePrinter.getInstance()
-          .printlnAlways("Handler received notification that the grow operation is now complete");
-      ConsolePrinter.getInstance()
-          .printlnAlways("Continued places: " + Arrays.toString(continuedPlaces.toArray()));
-      ConsolePrinter.getInstance()
-          .printlnAlways("New places: " + Arrays.toString(newPlaces.toArray()));
-    }
-
-    @Override
-    public void postShrink(int nbPlaces, List<? extends Place> removedPlaces) {
-      ConsolePrinter.getInstance()
-          .printlnAlways("Handler received notification that the shrink operation is now complete");
-      ConsolePrinter.getInstance()
-          .printlnAlways("Removed places: " + Arrays.toString(removedPlaces.toArray()));
-    }
 
     @Override
     public void preGrow(int nbPlaces) {
@@ -119,6 +100,25 @@ public class DummyApplication {
         }
       }
       return toRelease;
+    }
+
+    @Override
+    public void postGrow(
+        int nbPlaces, List<? extends Place> continuedPlaces, List<? extends Place> newPlaces) {
+      ConsolePrinter.getInstance()
+          .printlnAlways("Handler received notification that the grow operation is now complete");
+      ConsolePrinter.getInstance()
+          .printlnAlways("Continued places: " + Arrays.toString(continuedPlaces.toArray()));
+      ConsolePrinter.getInstance()
+          .printlnAlways("New places: " + Arrays.toString(newPlaces.toArray()));
+    }
+
+    @Override
+    public void postShrink(int nbPlaces, List<? extends Place> removedPlaces) {
+      ConsolePrinter.getInstance()
+          .printlnAlways("Handler received notification that the shrink operation is now complete");
+      ConsolePrinter.getInstance()
+          .printlnAlways("Removed places: " + Arrays.toString(removedPlaces.toArray()));
     }
   }
 }

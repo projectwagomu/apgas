@@ -13,26 +13,27 @@ package apgas.impl.elastic;
 import apgas.Constructs;
 import apgas.Place;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Interface which defines what to do when a shrink or grow order comes from the scheduler. The four
- * method presented here are used to define what needs to be done before and after the running
- * program either increases or decreases its number of running processes. As this depends on the
- * program, this interface was designed to be generic enough to allow for any implementation.
+ * Interface which defines what to do when a malleable (shrink or grow) order comes from the
+ * scheduler. The four method presented here are used to define what needs to be done before and
+ * after the running program either increases or decreases its number of running processes. As this
+ * depends on the program, this interface was designed to be generic enough to allow for any
+ * implementation.
  *
  * <p>Note that all the methods defined in this interface will be run from Place0. If alterations to
  * the running program need to be performed on other places, the usual finish/asyncAt constructs
  * provided by class {@link Constructs} can be used.
  *
- * <p>Programmers wishing to make their program malleable or evolving should implement this
- * interface and define the corresponding handler using method {@link
- * Constructs#defineMalleableHandler(MalleableHandler)} as soon as the program is ready to receive
- * grow or shrink orders from the scheduler.
+ * <p>Programmers wishing to make their program malleable should implement this interface and define
+ * the handler using method {@link Constructs#defineEvolvingHandler(EvolvingHandler, GetLoad)} as
+ * soon as the program is ready to receive grow or shrink orders from the scheduler.
  *
- * @author Patrick Finnerty
+ * @author Raoul adapated from Patrick Finnerty
  */
-public interface MalleableHandler extends Serializable {
+public interface EvolvingHandler extends Serializable {
 
   /**
    * Method called prior to an increase in the number of processes in the running program. If any
@@ -54,10 +55,10 @@ public interface MalleableHandler extends Serializable {
    *
    * <p>Method {@link #postShrink(int, List)} will be called next.
    *
-   * @param nbPlaces number of places that have to be released
+   * @param placeToShrink number of places that have to be released
    * @return the places that will be released
    */
-  List<Place> preShrink(int nbPlaces);
+  List<Place> preShrink(ArrayList<Place> placeToShrink);
 
   /**
    * Method called after the necessary number of places were added to the running program. The

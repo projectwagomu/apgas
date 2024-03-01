@@ -11,7 +11,10 @@
 
 package apgas;
 
-import apgas.impl.elastic.SocketMalleableCommunicator;
+import apgas.impl.elastic.EvolvingHandler;
+import apgas.impl.elastic.GetLoad;
+import apgas.impl.elastic.MalleableHandler;
+import apgas.impl.elastic.SocketElasticCommunicator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,12 +43,33 @@ public final class Configuration<T> {
 
   /**
    * Possible value for configuration {@link #APGAS_ELASTIC_PROPERTY}. This value sets the runtime
-   * to be malleable. A malleable communicator will be prepared by the runtime to receive
+   * to be malleable. An elastic communicator will be prepared by the runtime to receive
    * instructions from the scheduler. The programmer should call method {@link
-   * Constructs#defineMalleableHandle(apgas.impl.elastic.MalleableHandler)} to define the actions to
-   * perform before and after a malleable change.
+   * Constructs#defineMalleableHandler(MalleableHandler)} to define the actions to perform before and
+   * after a malleable change.
    */
   public static final String APGAS_ELASTIC_MALLEABLE = "malleable";
+
+  /**
+   * Possible value for configuration {@link #APGAS_ELASTIC_PROPERTY}. This value sets the runtime
+   * to be evolving. An elastic communicator will be prepared by the runtime to receive instructions
+   * from the scheduler. The programmer should call method {@link
+   * Constructs#defineEvolvingHandler(EvolvingHandler, GetLoad)} to define the actions to perform
+   * before and after an evolving change.
+   */
+  public static final String APGAS_ELASTIC_EVOLVING = "evolving";
+
+  /** This value sets the threshold for low load. */
+  public static final String APGAS_ELASTIC_LOWLOAD = "apgas.lowload";
+
+  /** This value sets the threshold for high load. */
+  public static final String APGAS_ELASTIC_HIGHLOAD = "apgas.highload";
+
+  /**
+   * This is the Property for hyper-threading it adjusts the thresholds to half the given values if
+   * it is set to true.
+   */
+  public static final String APGAS_ELASTIC_HYPER = "apgas.hyperthreading";
 
   /**
    * This String is used to define the property setting which indicated if the running APGAS program
@@ -57,6 +81,8 @@ public final class Configuration<T> {
    *       places / release some during execution
    *   <li>malleable: the running program may dynamically change the number of running places
    *       following orders given by the scheduler
+   *   <li>evolving: the running program may dynamically change the number of running places based
+   *       on load evaluation
    * </ul>
    */
   public static final String APGAS_ELASTIC_PROPERTY = "apgas.elastic";
@@ -111,8 +137,8 @@ public final class Configuration<T> {
    */
   public static final String APGAS_LAUNCHER_PROPERTY = "apgas.launcher";
 
-  /** String used to define the class used as malleable communicator */
-  public static final String APGAS_MALLEABLE_COMMUNICATOR_PROPERTY = "apgas.malleable_communicator";
+  /** String used to define the class used as elastic communicator */
+  public static final String APGAS_ELASTIC_COMMUNICATOR_PROPERTY = "apgas.elastic_communicator";
 
   /**
    * Property {@value #APGAS_MASTER_PROPERTY} optionally specifies the ip or socket address of the
@@ -230,10 +256,10 @@ public final class Configuration<T> {
    * Property defining the class used to communicate with the scheduler when a malleable program is
    * running
    */
-  public static final Configuration<String> CONFIG_APGAS_MALLEABLE_COMMUNICATOR =
+  public static final Configuration<String> CONFIG_APGAS_ELASTIC_COMMUNICATOR =
       new Configuration<>(
-          APGAS_MALLEABLE_COMMUNICATOR_PROPERTY,
-          SocketMalleableCommunicator.class.getCanonicalName(),
+          APGAS_ELASTIC_COMMUNICATOR_PROPERTY,
+          SocketElasticCommunicator.class.getCanonicalName(),
           String.class);
 
   /** Configuration object for {@link #APGAS_MASTER_PROPERTY} */
@@ -272,6 +298,33 @@ public final class Configuration<T> {
   /** Configuration for property {@value #APGAS_VERBOSE_LAUNCHER_PROPERTY} */
   public static final Configuration<Boolean> CONFIG_APGAS_VERBOSE_LAUNCHER =
       new Configuration<>(APGAS_VERBOSE_LAUNCHER_PROPERTY, false, Boolean.class);
+
+  /** Configuration for property {@value #APGAS_ELASTIC_LOWLOAD} */
+  public static final Configuration<Double> CONFIG_ELASTIC_LOWLOAD =
+      new Configuration<>(APGAS_ELASTIC_LOWLOAD, 10.0, Double.class);
+
+  /** Configuration for property {@value #APGAS_ELASTIC_HIGHLOAD} */
+  public static final Configuration<Double> CONFIG_ELASTIC_HIGHLOAD =
+      new Configuration<>(APGAS_ELASTIC_HIGHLOAD, 90.0, Double.class);
+
+  /** Configuration for object {@value #APGAS_ELASTIC_HYPER} */
+  public static final Configuration<Boolean> CONFIG_ELASTIC_HYPER =
+      new Configuration<>(APGAS_ELASTIC_HYPER, false, Boolean.class);
+
+  /**
+   * This String is used to define the property setting which indicated how to evaluate the load for
+   * evolving.
+   *
+   * <ul>
+   *   <li>cpu: (default), load will be evaluated by the cpu load of nodes
+   *   <li>task: load will be evaluated by tasks assigned to nodes
+   * </ul>
+   */
+  private static final String APGAS_EVOLVING_MODE_PROPERTY = "apgas.evolving.mode";
+
+  /** Property defining how load will be evaluated. */
+  public static final Configuration<String> CONFIG_APGAS_EVOLVING_MODE =
+      new Configuration<>(APGAS_EVOLVING_MODE_PROPERTY, "cpu", String.class);
 
   private final String name;
   private final Class<T> propertyType;
@@ -326,9 +379,11 @@ public final class Configuration<T> {
     allConfigs.add(CONFIG_APGAS_CONSOLEPRINTER);
     allConfigs.add(CONFIG_APGAS_HOSTMANAGER_STRATEGY);
     allConfigs.add(CONFIG_APGAS_ELASTIC);
-    allConfigs.add(CONFIG_APGAS_ELASTIC_ALLATONCE);
-    allConfigs.add(CONFIG_APGAS_MALLEABLE_COMMUNICATOR);
-
+    allConfigs.add(CONFIG_APGAS_ELASTIC_COMMUNICATOR);
+    allConfigs.add(CONFIG_APGAS_EVOLVING_MODE);
+    allConfigs.add(CONFIG_ELASTIC_LOWLOAD);
+    allConfigs.add(CONFIG_ELASTIC_HIGHLOAD);
+    allConfigs.add(CONFIG_ELASTIC_HYPER);
     for (final Configuration<?> c : allConfigs) {
       c.get();
     }
@@ -368,8 +423,11 @@ public final class Configuration<T> {
     allConfigs.add(CONFIG_APGAS_CONSOLEPRINTER);
     allConfigs.add(CONFIG_APGAS_HOSTMANAGER_STRATEGY);
     allConfigs.add(CONFIG_APGAS_ELASTIC);
-    allConfigs.add(CONFIG_APGAS_MALLEABLE_COMMUNICATOR);
-
+    allConfigs.add(CONFIG_APGAS_ELASTIC_ALLATONCE);
+    allConfigs.add(CONFIG_APGAS_ELASTIC_COMMUNICATOR);
+    allConfigs.add(CONFIG_ELASTIC_LOWLOAD);
+    allConfigs.add(CONFIG_ELASTIC_HIGHLOAD);
+    allConfigs.add(CONFIG_ELASTIC_HYPER);
     final StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("APGAS config on " + Constructs.here() + ":\n");
     for (final Configuration<?> c : allConfigs) {

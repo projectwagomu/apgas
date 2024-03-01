@@ -162,6 +162,10 @@ public class HostManager {
         .collect(Collectors.toList());
   }
 
+  public int peekNewPlaceId() {
+    return (placeIDGenerator.get() + 1);
+  }
+
   public List<String> getCopyOfLaunchCommand() {
     final List<String> result = new ArrayList<>();
     for (final String c : launchCommand) {
@@ -189,11 +193,11 @@ public class HostManager {
    * @return next suitable Host to use for a new Place, could be null
    */
   public Host getNextHost() {
-    Host nexHost = null;
+    Host nextHost = null;
     if (strategy == 1) { // Nodes are filled one after the other
       for (final Host h : hosts) {
         if (h.attachedPlacesCount() < h.maxPlacesPerHost) {
-          nexHost = h;
+          nextHost = h;
           break;
         }
       }
@@ -203,14 +207,15 @@ public class HostManager {
         final int diff = h.maxPlacesPerHost - h.attachedPlacesCount();
         if (diff > 0 && diff > difference) {
           difference = diff;
-          nexHost = h;
+          nextHost = h;
         }
       }
     }
-    if (verboseLauncher) {
-      System.err.println("Hostmanager: getNextHost found host: " + nexHost.getHostName());
+
+    if (verboseLauncher && nextHost != null) {
+      System.out.println("[Hostmanager]: getNextHost found host: " + nextHost.getHostName());
     }
-    return nexHost;
+    return nextHost;
   }
 
   @Override
