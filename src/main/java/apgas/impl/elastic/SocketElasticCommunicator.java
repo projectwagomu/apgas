@@ -11,7 +11,6 @@
 package apgas.impl.elastic;
 
 import apgas.Configuration;
-import apgas.Place;
 import apgas.impl.GlobalRuntimeImpl;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -156,9 +155,7 @@ public class SocketElasticCommunicator extends ElasticCommunicator {
           final int change = Integer.parseInt(str[1]);
           if (order.equals("shrink")) {
             if (Configuration.CONFIG_APGAS_ELASTIC.get().equals("evolving")) {
-              final ArrayList<Place> placeToShrink = new ArrayList<>();
-              placeToShrink.add(GlobalRuntimeImpl.getRuntime().place(change));
-              super.evolvingShrink(placeToShrink);
+              // Currently, should never happen
             } else {
               long before = System.nanoTime();
               super.malleableShrink(change);
@@ -172,6 +169,7 @@ public class SocketElasticCommunicator extends ElasticCommunicator {
             super.elasticGrow(change, hostnames);
             long growTime = System.nanoTime() - before;
             sendToScheduler("growTimeAPGAS;" + change + ";" + growTime);
+            GlobalRuntimeImpl.getRuntime().EVOLVING.openGrowRequest.set(false);
           } else {
             System.err.println(
                 "Received unexpected order "

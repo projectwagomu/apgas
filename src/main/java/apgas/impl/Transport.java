@@ -14,7 +14,7 @@ package apgas.impl;
 import apgas.Configuration;
 import apgas.DeadPlaceException;
 import apgas.Place;
-import apgas.util.BadPlaceException;
+import apgas.util.ConsolePrinter;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.InMemoryFormat;
 import com.hazelcast.config.JoinConfig;
@@ -41,7 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /** The {@link Transport} class manages the Hazelcast cluster and implements active messages. */
 public class Transport implements InitialMembershipListener {
 
-  private static final String APGAS = "apgas";
   private static final String APGAS_EXECUTOR = "apgas:executor";
   private static final String APGAS_FINISH = "apgas:finish";
   private static final String APGAS_PLACE_ID = "apgas:place:id";
@@ -102,7 +101,7 @@ public class Transport implements InitialMembershipListener {
     }
 
     final NetworkConfig networkConfig = config.getNetworkConfig();
-
+    networkConfig.setPort(Configuration.CONFIG_APGAS_PORT.get());
     final String networkInterface = Configuration.CONFIG_APGAS_NETWORK_INTERFACE.get();
     if (networkInterface != null && networkInterface.length() > 0) {
       System.err.println("[APGAS] sets network interface to " + networkInterface);
@@ -124,7 +123,7 @@ public class Transport implements InitialMembershipListener {
     if (master != null) {
       join.getTcpIpConfig().addMember(master);
     }
-    config.setInstanceName(APGAS);
+    config.setInstanceName(Configuration.CONFIG_HAZELCAST_NAME.get());
     config.addListConfig(new ListConfig(APGAS_PLACES).setBackupCount(backupCount));
   }
 
@@ -137,7 +136,10 @@ public class Transport implements InitialMembershipListener {
     final Integer placeID = member.getIntAttribute(APGAS_PLACE_ID);
     if (mapPlaceIDtoMember.containsKey(placeID)) {
       System.err.println("[APGAS] a new place was added but ID is already in use: " + placeID);
-      throw new BadPlaceException();
+      ConsolePrinter.getInstance()
+          .printlnAlways("[APGAS] a new place was added but ID is already in use: " + placeID);
+      //      throw new BadPlaceException();
+      return;
     }
     maxPlace = Math.max(maxPlace, placeID + 1);
     mapPlaceIDtoMember.put(placeID, member);
@@ -218,7 +220,7 @@ public class Transport implements InitialMembershipListener {
 
   @Override
   public synchronized void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
-    addPlace(memberAttributeEvent.getMember());
+    //    addPlace(memberAttributeEvent.getMember());
   }
 
   @Override

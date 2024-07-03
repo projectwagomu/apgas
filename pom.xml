@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.projectwagomu</groupId>
     <artifactId>apgas</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
     <name>Elastic APGAS for Java</name>
     <description>An elastic implementation of the APGAS for Java library</description>
 

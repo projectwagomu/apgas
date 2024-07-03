@@ -785,7 +785,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
         try {
           // if (!InetAddress.getByName(master.split(":")[0]).isReachable(ni, 0, 100)) {
-          if (isReachable(ni, master.split(":")[0], 5701, 100)) {
+          if (isReachable(ni, master.split(":")[0], Configuration.CONFIG_APGAS_PORT.get(), 100)) {
             if (verboseLauncher) {
               System.err.println(
                   "[APGAS] host " + master + " is not reachable with networkinterface " + ni);
@@ -1109,13 +1109,11 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
    */
   public List<Integer> startMallPlacesBlocking(int n, List<String> hosts) {
     // Add all available hosts to the hostManager for the whole program execution.
-    // TODO: This needs to be changed when adding Job Scheduler support. 
-    if (!Configuration.CONFIG_APGAS_ELASTIC.get().equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
-      hosts.forEach(hostManager::addHost);
-    }
-    final boolean allAtOnce = Configuration.CONFIG_APGAS_ELASTIC_ALLATONCE.get();
-
     synchronized (MALLEABILITY_SYNC) {
+      hosts.forEach(hostManager::addHost);
+
+      final boolean allAtOnce = Configuration.CONFIG_APGAS_ELASTIC_ALLATONCE.get();
+
       try {
         List<Integer> newPlaceIDs = new ArrayList<>();
         int totalPlaces = n;
@@ -1157,8 +1155,9 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
           p,
           () -> {
             if (verbose) {
-        		  ConsolePrinter.getInstance().printlnAlways(
-                    p + " was informed about the new place count of " + expectedPlacesCount);
+              ConsolePrinter.getInstance()
+                  .printlnAlways(
+                      p + " was informed about the new place count of " + expectedPlacesCount);
             }
             GlobalRuntimeImpl.getRuntime().waitForNewPlacesCount(expectedPlacesCount);
             GlobalRuntimeImpl.getRuntime()
@@ -1259,6 +1258,28 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
 
   private void waitForAllPlaces() throws Exception {
     final long beforeMaxPlaces = System.nanoTime();
+
+    int expectedPlacesCount = initialPlaces;
+    while (places().size() != expectedPlacesCount
+        || transport.hazelcast.getCluster().getMembers().size() != expectedPlacesCount
+        || !transport.hazelcast.getPartitionService().isClusterSafe()
+        || transport.getMembers().values().size() != expectedPlacesCount) {
+      if (verboseLauncher) {
+        System.out.println(
+            "[APGAS] Place("
+                + here
+                + ": not all places are started1, places.size()= "
+                + places().size()
+                + ", expectedPlacesCount="
+                + expectedPlacesCount);
+      }
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+      } catch (final InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+
     while (places.size() < initialPlaces) {
       try {
         TimeUnit.SECONDS.sleep(1);
@@ -1268,7 +1289,7 @@ public final class GlobalRuntimeImpl extends GlobalRuntime {
                   + ManagementFactory.getRuntimeMXBean().getName()
                   + ", "
                   + home
-                  + ": not all places are started, places.size()= "
+                  + ": not all places are started2, places.size()= "
                   + places.size()
                   + ", initialPlaces="
                   + initialPlaces);

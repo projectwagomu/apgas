@@ -5,16 +5,15 @@ import static apgas.Constructs.*;
 import apgas.Configuration;
 import apgas.Place;
 import apgas.impl.GlobalRuntimeImpl;
-import apgas.impl.HostManager;
 import apgas.util.ConsolePrinter;
 import apgas.util.GlobalRef;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Class in charge of changing APGAS Places dynamically at runtime.
@@ -67,6 +66,9 @@ public class EvolvingMonitor implements Serializable {
    * evaluation on the place. When place 0 is shut down, load evaluation will be stopped as well.
    */
   public volatile boolean placeActive = true;
+
+  /** Only one open grow request sent to the job scheduler at a time is allowed */
+  public AtomicBoolean openGrowRequest = new AtomicBoolean(false);
 
   /**
    * Global Ref on Hashmap for load collection on place 0
@@ -186,105 +188,43 @@ public class EvolvingMonitor implements Serializable {
 
             if (!GlobalRuntimeImpl.getRuntime().EVOLVING.waitingForPlaceChanges) {
               calcMinAndAvgLoad();
-              /*ConsolePrinter.getInstance()
-              .printlnAlways(
-                      "[Evolving] shrinkBlockingRef: " + shrinkBlockingRef.get() + ".");*/
               // Growing
               if (avgLoadAllPlaces > highLoadThreshold) {
-                List<String> hosts = new ArrayList<>();
-                if (impl.hostManager
-                    .getHostNames()
-                    .get(0)
-                    .contains("its-cs")) { // for kassel cluster
-
-                  HostManager.Host nextHost = impl.hostManager.getNextHost();
-                  if (nextHost != null) {
-                    startedWaiting = System.nanoTime();
-                    ConsolePrinter.getInstance()
-                        .printlnAlways(
-                            "[Evolving] Action Grow started "
-                                + (startedWaiting - impl.startupTime) / 1e9
-                                + " seconds after program start. places()="
-                                + places()
-                                + ", numPlaces="
-                                + places().size()
-                                + ", newPlaceID="
-                                + impl.hostManager.peekNewPlaceId());
-
-                    ConsolePrinter.getInstance()
-                        .printlnAlways("[Evolving] Next Host Cluster: " + nextHost);
-                    hosts.add(nextHost.getHostName());
-                    GlobalRuntimeImpl.getRuntime().EVOLVING.waitingForPlaceChanges = true;
-                    GlobalRuntimeImpl.getRuntime().elasticCommunicator.elasticGrow(1, hosts);
-                    long now = System.nanoTime();
-                    ConsolePrinter.getInstance()
-                        .printlnAlways(
-                            "[Evolving] Action Grow finished "
-                                + (now - impl.startupTime) / 1e9
-                                + " seconds after program start. Took "
-                                + (now - startedWaiting) / 1e9
-                                + " seconds. places()="
-                                + places()
-                                + ", numPlaces="
-                                + places().size()
-                                + ", newPlaceID="
-                                + places().get(places().size() - 1).id);
-                  } else {
-                    ConsolePrinter.getInstance()
-                        .printlnAlways(
-                            "[Evolving] All hosts have max attached places - no free hosts available.");
-                    continue;
-                  }
-                  hosts.clear();
-                } else if (impl.hostManager.getNextHost() != null) { // for local testing
-                  startedWaiting = System.nanoTime();
+                // just sending a request to the scheduler
+                if (openGrowRequest.compareAndSet(false, true)) {
                   ConsolePrinter.getInstance()
                       .printlnAlways(
-                          "[Evolving] Action Grow started "
-                              + (startedWaiting - impl.startupTime) / 1e9
-                              + " seconds after program start. places()="
-                              + places()
-                              + ", numPlaces="
-                              + places().size()
-                              + ", newPlaceID="
-                              + impl.hostManager.peekNewPlaceId());
-
-                  hosts.add(impl.hostManager.getHostNames().get(0));
-                  GlobalRuntimeImpl.getRuntime().EVOLVING.waitingForPlaceChanges = true;
-                  GlobalRuntimeImpl.getRuntime().elasticCommunicator.elasticGrow(1, hosts);
-                  long now = System.nanoTime();
-                  ConsolePrinter.getInstance()
-                      .printlnAlways(
-                          "[Evolving] Action Grow finished "
-                              + (now - impl.startupTime) / 1e9
-                              + " seconds after program start. Took "
-                              + (now - startedWaiting) / 1e9
-                              + " seconds. places()="
-                              + places()
-                              + ", numPlaces="
-                              + places().size()
-                              + ", newPlaceID="
-                              + places().get(places().size() - 1).id);
-                } else { // Reminder: other clusters do not work currently
-                  ConsolePrinter.getInstance()
-                      .printlnAlways("[Evolving] No Host for growing available.");
-                  continue;
+                          "[Evolving] Requested growing ie one more node from the scheduler");
+                  String msg = "Evolving;Request;1";
+                  sendToScheduler(msg);
+                  ConsolePrinter.getInstance().printlnAlways("sendtoScheduler : " + msg);
                 }
-
                 // Shrinking
-              } else if ((min == 0 || avgLoadAllPlaces < lowLoadThreshold) && places().size() > 1) {
+              } else if ((min == 0 || avgLoadAllPlaces < lowLoadThreshold)
+                  && places().size() > 1
+                  && placeIdToShrink > 0) {
                 GlobalRuntimeImpl.getRuntime().EVOLVING.waitingForPlaceChanges = true;
                 startedWaiting = System.nanoTime();
                 ConsolePrinter.getInstance()
                     .printlnAlways(
                         "[Evolving] Action Shrink started "
                             + (startedWaiting - impl.startupTime) / 1e9
-                            + " seconds after program start. places()="
+                            + "   seconds after program start. places()="
                             + places()
                             + ", numPlaces="
                             + places().size()
                             + ", shrinkPlaceID="
                             + placeIdToShrink);
+
+                if (!places().contains(place(placeIdToShrink))) {
+                  ConsolePrinter.getInstance()
+                      .printlnAlways(
+                          "[Evolving] Action Shrink break because place "
+                              + placeIdToShrink
+                              + " is not alive");
+                  GlobalRuntimeImpl.getRuntime().EVOLVING.waitingForPlaceChanges = false;
+                  continue;
+                }
 
                 placeToShrink.add(GlobalRuntimeImpl.getRuntime().place(placeIdToShrink));
 
@@ -324,6 +264,8 @@ public class EvolvingMonitor implements Serializable {
                             + ", shrinkPlaceID="
                             + placeIdToShrink);
                 placeToShrink.clear();
+                GlobalRuntimeImpl.getRuntime().EVOLVING.openGrowRequest.set(false);
+                sendToScheduler("shrinkTimeAPGAS;1;" + (now - startedWaiting));
               }
               GlobalRuntimeImpl.getRuntime().EVOLVING.waitingForPlaceChanges = false;
             }

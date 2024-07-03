@@ -45,8 +45,8 @@ public final class Configuration<T> {
    * Possible value for configuration {@link #APGAS_ELASTIC_PROPERTY}. This value sets the runtime
    * to be malleable. An elastic communicator will be prepared by the runtime to receive
    * instructions from the scheduler. The programmer should call method {@link
-   * Constructs#defineMalleableHandler(MalleableHandler)} to define the actions to perform before and
-   * after a malleable change.
+   * Constructs#defineMalleableHandler(MalleableHandler)} to define the actions to perform before
+   * and after a malleable change.
    */
   public static final String APGAS_ELASTIC_MALLEABLE = "malleable";
 
@@ -184,13 +184,6 @@ public final class Configuration<T> {
   public static final String APGAS_PORT_PROPERTY = "apgas.port";
 
   /**
-   * Places per Node
-   *
-   * <p>Defaults to 0 (not working)
-   */
-  public static final String APGAS_PPERNODE_PROPERTY = "apgas.ppernode";
-
-  /**
    * Property {@value #APGAS_RESILIENT_PROPERTY} enables fault tolerance (Boolean property).
    *
    * <p>If set, the global runtime does not abort the execution if a place fails.
@@ -205,6 +198,9 @@ public final class Configuration<T> {
    * property is not set.
    */
   public static final String APGAS_THREADS_PROPERTY = "apgas.threads";
+
+  /** This Property sets the name of the hazelcast instance. */
+  public static final String HAZELCAST_NAME_PROPERTY = "hazelcast.name";
 
   /**
    * Controls the verbosity of the launcher (Boolean property).
@@ -311,6 +307,10 @@ public final class Configuration<T> {
   public static final Configuration<Boolean> CONFIG_ELASTIC_HYPER =
       new Configuration<>(APGAS_ELASTIC_HYPER, false, Boolean.class);
 
+  /** Configuration for object {@value #HAZELCAST_NAME_PROPERTY} */
+  public static final Configuration<String> CONFIG_HAZELCAST_NAME =
+      new Configuration<>(HAZELCAST_NAME_PROPERTY, "apgas", String.class);
+
   /**
    * This String is used to define the property setting which indicated how to evaluate the load for
    * evolving.
@@ -384,6 +384,7 @@ public final class Configuration<T> {
     allConfigs.add(CONFIG_ELASTIC_LOWLOAD);
     allConfigs.add(CONFIG_ELASTIC_HIGHLOAD);
     allConfigs.add(CONFIG_ELASTIC_HYPER);
+    allConfigs.add(CONFIG_HAZELCAST_NAME);
     for (final Configuration<?> c : allConfigs) {
       c.get();
     }
@@ -428,6 +429,7 @@ public final class Configuration<T> {
     allConfigs.add(CONFIG_ELASTIC_LOWLOAD);
     allConfigs.add(CONFIG_ELASTIC_HIGHLOAD);
     allConfigs.add(CONFIG_ELASTIC_HYPER);
+    allConfigs.add(CONFIG_HAZELCAST_NAME);
     final StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("APGAS config on " + Constructs.here() + ":\n");
     for (final Configuration<?> c : allConfigs) {

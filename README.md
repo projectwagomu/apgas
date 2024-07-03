@@ -15,7 +15,6 @@ Upon receiving a _shrink_ or _grow_ order from the scheduler, the APGAS runtime 
 
 Evolving programs can automatically respond to changes in the system load (e.g., CPU load) and thus autonomously start or remove places as needed.
 A heuristic based on the CPU load, [`GetCpuLoad`](src/main/java/apgas/impl/elastic/GetCpuLoad.java) is provided, along with a [dummy evolving application](src/main/java/agpas/imp/elastic/DummyEvolvingApplication.java) and a [test script](bin/testEvolvingDummyApplication.sh).
-Integration with job schedulers for evolving programs is currently under development.
 
 
 ## Requirements
@@ -58,14 +57,14 @@ In Maven:
 <dependency>
   <groupId>com.github.projectwagomu</groupId>
   <artifactId>apgas</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
 </dependency>
 ```
 
 In Gradle:
 
 ```
-compile 'com.github.projectwagomu:apgas:0.0.3'
+compile 'com.github.projectwagomu:apgas:0.0.4'
 ```
 
 Note that you will need to *install* this project to your local Maven repository beforehand for the methods described above to work (refer to the build instructions above).
@@ -78,10 +77,11 @@ This software is released under the terms of the [Eclipse Public License v1.0](L
 
 ## Publications
 
-- Transparent Resource Elasticity for Task-Based Cluster Environments with Work Stealing [10.1145/3458744.3473361](https://doi.org/10.1145/3458744.3473361)
-- Malleable APGAS Programs and their Support in Batch Job Schedulers (to appear)
-- On the Performance of Malleable APGAS Programs and Batch Job Schedulers (to appear)
-- Evolving APGAS Programs: Automatic and Transparent Resource Adjustments at Runtime (to appear)
+- Transparent Resource Elasticity for Task-Based Cluster Environments with Work Stealing (https://doi.org/10.1145/3458744.3473361)
+- Malleable APGAS Programs and their Support in Batch Job Schedulers (https://doi.org/10.1007/978-3-031-48803-0_8)
+- On the Performance of Malleable APGAS Programs and Batch Job Schedulers (https://doi.org/10.1007/s42979-024-02641-7)
+- Evolving APGAS Programs: Automatic and Transparent Resource Adjustments at Runtime (https://doi.org/10.1007/978-3-031-61763-8_15)
+- The Impact of Evolving APGAS Programs on HPC Clusters (to appear)
 
 ## Contributors
 

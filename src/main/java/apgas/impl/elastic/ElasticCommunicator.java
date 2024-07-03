@@ -28,15 +28,21 @@ import java.util.List;
 public abstract class ElasticCommunicator {
 
   /**
-   * Used to make sure both pre(Grow/Shrink) and pro(Grow/Shrink) have been finished before the
+   * Used to make sure both pre(Grow/Shrink) and post(Grow/Shrink) have been finished before the
    * ElasticCommunicator is disabled
    */
   public final Object lock = new Object();
 
+  /**
+   * Double locks shrinking growin in addition to lock as evolvingShrink is called "externally" from
+   * EvolvingMonitor
+   */
+  public final Object paranoidDoubleLock = new Object();
+
   private final String elasticityMode = Configuration.CONFIG_APGAS_ELASTIC.get();
 
   /**
-   * Informs the scheduler that the hosts given as argument were released
+   * Informs the scheduler that the hosts given as argument was released
    *
    * @param hosts released following a shrink order
    */
@@ -49,57 +55,59 @@ public abstract class ElasticCommunicator {
    * @param hosts hosts to use to spawn new places
    */
   protected final void elasticGrow(int nbPlacesToGrow, List<String> hosts) {
-    ConsolePrinter.getInstance().printlnAlways("elasticGrow() entered.");
+    synchronized (paranoidDoubleLock) {
+      ConsolePrinter.getInstance().printlnAlways("elasticGrow() entered.");
 
-    // Perform the user-defined pre-grow tasks
-    final GlobalRuntimeImpl impl = GlobalRuntimeImpl.getRuntime();
-    if (elasticityMode.equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
-      ConsolePrinter.getInstance().printlnAlways("Evolving Pre Grow");
-      impl.evolvingHandler.preGrow(nbPlacesToGrow);
-    } else {
-      ConsolePrinter.getInstance().printlnAlways("Malleable Pre Grow");
-      impl.malleableHandler.preGrow(nbPlacesToGrow);
-    }
-    final List<? extends Place> oldPlaces = Constructs.places();
-
-    // Grow
-    impl.startMallPlacesBlocking(nbPlacesToGrow, hosts);
-
-    // Check what the new places are
-    final List<? extends Place> nowPlaces = Constructs.places();
-    final ArrayList<Place> newPlaces = new ArrayList<>();
-    for (final Place p : nowPlaces) {
-      if (!oldPlaces.contains(p)) {
-        newPlaces.add(p);
+      // Perform the user-defined pre-grow tasks
+      final GlobalRuntimeImpl impl = GlobalRuntimeImpl.getRuntime();
+      if (elasticityMode.equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
+        ConsolePrinter.getInstance().printlnAlways("Evolving Pre Grow");
+        impl.evolvingHandler.preGrow(nbPlacesToGrow);
+      } else {
+        ConsolePrinter.getInstance().printlnAlways("Malleable Pre Grow");
+        impl.malleableHandler.preGrow(nbPlacesToGrow);
       }
-    }
+      final List<? extends Place> oldPlaces = Constructs.places();
 
-    // Inform the running program of the end of this grow operation
-    if (elasticityMode.equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
-      ConsolePrinter.getInstance().printlnAlways("Evolving Post Grow");
-      GlobalRuntimeImpl.getRuntime()
-          .evolvingHandler
-          .postGrow(nowPlaces.size(), oldPlaces, newPlaces);
-    } else {
-      ConsolePrinter.getInstance().printlnAlways("Malleable Post Grow");
-      GlobalRuntimeImpl.getRuntime()
-          .malleableHandler
-          .postGrow(nowPlaces.size(), oldPlaces, newPlaces);
-    }
+      // Grow
+      impl.startMallPlacesBlocking(nbPlacesToGrow, hosts);
 
-    // Start cpuLoadEvaluation on new places if in evolving mode
-    if (elasticityMode.equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
-      GetLoad _load = GlobalRuntimeImpl.getRuntime().EVOLVING.load;
-      for (Place place : newPlaces) {
-        ConsolePrinter.getInstance()
-            .printlnAlways("Start obtaining PlaceLoad on place " + place.id);
+      // Check what the new places are
+      final List<? extends Place> nowPlaces = Constructs.places();
+      final ArrayList<Place> newPlaces = new ArrayList<>();
+      for (final Place p : nowPlaces) {
+        if (!oldPlaces.contains(p)) {
+          newPlaces.add(p);
+        }
+      }
+
+      // Inform the running program of the end of this grow operation
+      if (elasticityMode.equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
+        ConsolePrinter.getInstance().printlnAlways("Evolving Post Grow");
         GlobalRuntimeImpl.getRuntime()
-            .immediateAsyncAt(
-                place,
-                () -> {
-                  GlobalRuntimeImpl.getRuntime().EVOLVING = new EvolvingMonitor();
-                  GlobalRuntimeImpl.getRuntime().EVOLVING.startObtainPlaceLoad(_load);
-                });
+            .evolvingHandler
+            .postGrow(nowPlaces.size(), oldPlaces, newPlaces);
+      } else {
+        ConsolePrinter.getInstance().printlnAlways("Malleable Post Grow");
+        GlobalRuntimeImpl.getRuntime()
+            .malleableHandler
+            .postGrow(nowPlaces.size(), oldPlaces, newPlaces);
+      }
+
+      // Start cpuLoadEvaluation on new places if in evolving mode
+      if (elasticityMode.equals(Configuration.APGAS_ELASTIC_EVOLVING)) {
+        GetLoad _load = GlobalRuntimeImpl.getRuntime().EVOLVING.load;
+        for (Place place : newPlaces) {
+          ConsolePrinter.getInstance()
+              .printlnAlways("Start obtaining PlaceLoad on place " + place.id);
+          GlobalRuntimeImpl.getRuntime()
+              .immediateAsyncAt(
+                  place,
+                  () -> {
+                    GlobalRuntimeImpl.getRuntime().EVOLVING = new EvolvingMonitor();
+                    GlobalRuntimeImpl.getRuntime().EVOLVING.startObtainPlaceLoad(_load);
+                  });
+        }
       }
     }
   }
@@ -111,41 +119,48 @@ public abstract class ElasticCommunicator {
    */
   @SuppressWarnings("unchecked")
   protected final void malleableShrink(int nbPlacesToFree) {
-    ConsolePrinter.getInstance().printlnAlways("malleableShrink() entered.");
+    synchronized (paranoidDoubleLock) {
+      ConsolePrinter.getInstance().printlnAlways("malleableShrink() entered.");
 
-    // Perform the user-defined pre-shrink tasks
-    final List<Place> toRelease =
-        GlobalRuntimeImpl.getRuntime().malleableHandler.preShrink(nbPlacesToFree);
+      // Perform the user-defined pre-shrink tasks
+      final List<Place> toRelease =
+          GlobalRuntimeImpl.getRuntime().malleableHandler.preShrink(nbPlacesToFree);
 
-    // Obtain the hostnames of the places to release and shutdown these places
-    final List<String> hosts = GlobalRuntimeImpl.getRuntime().shutdownMallPlacesBlocking(toRelease);
+      // Obtain the hostnames of the places to release and shutdown these places
+      final List<String> hosts =
+          GlobalRuntimeImpl.getRuntime().shutdownMallPlacesBlocking(toRelease);
 
-    // Inform the scheduler of the released hosts
-    hostReleased(hosts);
+      // Inform the scheduler of the released hosts
+      hostReleased(hosts);
 
-    // Inform the running program of the end of the operation
-    final List<Place> places = (List<Place>) Constructs.places();
-    GlobalRuntimeImpl.getRuntime().malleableHandler.postShrink(places.size(), toRelease);
+      // Inform the running program of the end of the operation
+      final List<Place> places = (List<Place>) Constructs.places();
+      GlobalRuntimeImpl.getRuntime().malleableHandler.postShrink(places.size(), toRelease);
+    }
   }
 
   @SuppressWarnings("unchecked")
   protected final void evolvingShrink(ArrayList<Place> placeToShrink) {
-    ConsolePrinter.getInstance().printlnAlways("evolvingShrink() entered.");
-    // Perform the user-defined pre - shrink tasks
-    final List<Place> toRelease =
-        GlobalRuntimeImpl.getRuntime().evolvingHandler.preShrink(placeToShrink);
-    // Obtain the hostnames of the places to release and shutdown these places
-    @SuppressWarnings("unused")
-	final List<String> hosts = GlobalRuntimeImpl.getRuntime().shutdownMallPlacesBlocking(toRelease);
+    synchronized (paranoidDoubleLock) {
+      ConsolePrinter.getInstance().printlnAlways("evolvingShrink() entered.");
+      // Perform the user-defined pre - shrink tasks
+      final List<Place> toRelease =
+          GlobalRuntimeImpl.getRuntime().evolvingHandler.preShrink(placeToShrink);
+      // Obtain the hostnames of the places to release and shutdown these places
+      final List<String> hosts =
+          GlobalRuntimeImpl.getRuntime().shutdownMallPlacesBlocking(toRelease);
 
-    // Inform the scheduler of the released hosts
-    // Reminder: No scheduler - temporarily removed call
-    //hostReleased(hosts);
-    ConsolePrinter.getInstance().printlnAlways("Call to inform scheduler disabled");
+      // Inform the scheduler of the released hosts
+      for (String h : hosts) {
+        String msg = "Evolving;Release;" + h;
+        sendToScheduler(msg);
+        ConsolePrinter.getInstance().printlnAlways("sendtoScheduler : " + msg);
+      }
 
-    // Inform the running program of the end of the operation
-    final List<Place> places = (List<Place>) Constructs.places();
-    GlobalRuntimeImpl.getRuntime().evolvingHandler.postShrink(places.size(), toRelease);
+      // Inform the running program of the end of the operation
+      final List<Place> places = (List<Place>) Constructs.places();
+      GlobalRuntimeImpl.getRuntime().evolvingHandler.postShrink(places.size(), toRelease);
+    }
   }
 
   /**

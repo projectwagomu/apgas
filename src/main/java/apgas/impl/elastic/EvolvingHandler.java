@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * Interface which defines what to do when a malleable (shrink or grow) order comes from the
- * scheduler. The four method presented here are used to define what needs to be done before and
+ * scheduler. The four methods presented here are used to define what needs to be done before and
  * after the running program either increases or decreases its number of running processes. As this
  * depends on the program, this interface was designed to be generic enough to allow for any
  * implementation.
